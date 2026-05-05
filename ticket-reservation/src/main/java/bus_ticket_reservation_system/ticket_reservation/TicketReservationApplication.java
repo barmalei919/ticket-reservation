@@ -1,0 +1,13 @@
+package bus_ticket_reservation_system.ticket_reservation;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class TicketReservationApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(TicketReservationApplication.class, args);
+	}
+
+}
