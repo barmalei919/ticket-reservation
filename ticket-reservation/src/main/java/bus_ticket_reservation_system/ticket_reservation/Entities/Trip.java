@@ -25,7 +25,7 @@ public class Trip {
     private LocalDateTime timeEnd;
 
     @Column(name = "price", nullable = false)
-    private Long price;
+    private Integer price;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
@@ -46,7 +46,7 @@ public class Trip {
     @JoinColumn(name = "bus_id")
     private Bus bus;
 
-    public Trip(LocalDateTime timeStart, LocalDateTime timeEnd, Long price, TripStatus status, List<Ticket> tickets, Route route, Bus bus) {
+    public Trip(LocalDateTime timeStart, LocalDateTime timeEnd, Integer price, TripStatus status, List<Ticket> tickets, Route route, Bus bus) {
         this.timeStart = timeStart;
         this.timeEnd = timeEnd;
         this.price = price;
@@ -104,11 +104,11 @@ public class Trip {
         this.timeEnd = timeEnd;
     }
 
-    public Long getPrice() {
+    public Integer getPrice() {
         return price;
     }
 
-    public void setPrice(Long price) {
+    public void setPrice(Integer price) {
         this.price = price;
     }
 

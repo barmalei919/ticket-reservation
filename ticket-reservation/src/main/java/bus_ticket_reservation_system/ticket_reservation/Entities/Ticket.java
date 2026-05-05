@@ -32,6 +32,9 @@ public class Ticket {
     @JoinColumn(name = "seat_id")
     private Seat seat;
 
+    @Column(name = "price",nullable = false)
+    private Integer price;
+
     public Seat getSeat() {
         return seat;
     }
@@ -41,15 +44,24 @@ public class Ticket {
     }
 
 
-    public Ticket(TripStatus status, Passenger passenger, Bus bus, Trip trip, Seat seat) {
+    public Ticket(TripStatus status, Passenger passenger, Bus bus, Trip trip, Seat seat, Integer price) {
         this.status = status;
         this.passenger = passenger;
         this.bus = bus;
         this.trip = trip;
         this.seat = seat;
+        this.price = price;
     }
 
     public Ticket() {
+    }
+
+    public Integer getPrice() {
+        return price;
+    }
+
+    public void setPrice(Integer price) {
+        this.price = price;
     }
 
     public TripStatus getStatus() {
