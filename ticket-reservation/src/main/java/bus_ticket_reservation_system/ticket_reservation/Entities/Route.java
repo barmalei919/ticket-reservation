@@ -25,7 +25,6 @@ public class Route {
         this.townTo = townTo;
         this.townFrom = townFrom;
         this.kilometres = kilometres;
-
     }
 
     public Route() {
