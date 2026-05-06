@@ -3,6 +3,7 @@ import bus_ticket_reservation_system.ticket_reservation.Entities.Route;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.RouteRepository;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.TripRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -41,6 +42,7 @@ public class RouteService {
                 .orElseThrow(() -> new EntityNotFoundException("Route c таким айди не найден"));
     }
 
+    @Transactional
     public Route updateRoute(Long id, Route routeDetails) {
         var updatedRoute = routeRepository.findById(id)
                 .orElseThrow(()-> new EntityNotFoundException("Route с таким айди не найден"));
@@ -50,7 +52,7 @@ public class RouteService {
         return routeRepository.save(updatedRoute);
     }
 
-
+    @Transactional
     public void deleteRoute(Long id) {
         if (!routeRepository.existsById(id)) {
             throw new IllegalArgumentException("Маршрут не найден");

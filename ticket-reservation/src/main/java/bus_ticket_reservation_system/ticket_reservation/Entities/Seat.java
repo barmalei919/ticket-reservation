@@ -13,7 +13,7 @@ public class Seat {
     private Long id;
 
     @Column(name = "seat_number",nullable = false)
-    private Long seatNumber;
+    private Integer seatNumber;
 
     @JsonIgnore
     @ManyToOne
@@ -32,7 +32,7 @@ public class Seat {
         this.bus = bus;
     }
 
-    public Seat(Bus bus, Long seatNumber) {
+    public Seat(Bus bus, Integer seatNumber) {
         this.bus = bus;
         this.seatNumber = seatNumber;
     }
@@ -41,11 +41,11 @@ public class Seat {
         this.bus = bus;
     }
 
-    public Long getSeatNumber() {
+    public Integer getSeatNumber() {
         return seatNumber;
     }
 
-    public void setSeatNumber(Long seatNumber) {
+    public void setSeatNumber(Integer seatNumber) {
         this.seatNumber = seatNumber;
     }
 
