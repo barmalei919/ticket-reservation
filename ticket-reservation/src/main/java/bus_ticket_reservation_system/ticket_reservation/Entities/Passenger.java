@@ -1,12 +1,22 @@
 package bus_ticket_reservation_system.ticket_reservation.Entities;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "passengers")
 public class Passenger {
     @Id
@@ -24,50 +34,11 @@ public class Passenger {
     private String otchestvo;
 
     @OneToMany(mappedBy = "passenger", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Ticket> ticket = new ArrayList<>();
 
     @OneToOne
+    @JsonIgnore
     private User user;
 
-    public Passenger(String name, String surName, String otchestvo, List<Ticket> ticket) {
-        this.name = name;
-        this.surName = surName;
-        this.otchestvo = otchestvo;
-        this.ticket = ticket;
-    }
-
-    public Passenger() {
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getSurName() {
-        return surName;
-    }
-
-    public void setSurName(String surName) {
-        this.surName = surName;
-    }
-
-    public String getOtchestvo() {
-        return otchestvo;
-    }
-
-    public void setOtchestvo(String otchestvo) {
-        this.otchestvo = otchestvo;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getId() {
-        return id;
-    }
 }

@@ -1,10 +1,18 @@
 package bus_ticket_reservation_system.ticket_reservation.Entities;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 
 @Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "routes")
 public class Route {
     @Id
@@ -21,45 +29,4 @@ public class Route {
     @Column(name = "kilometres", nullable = false)
     private Integer kilometres;
 
-    public Route(String townTo, String townFrom, Integer kilometres) {
-        this.townTo = townTo;
-        this.townFrom = townFrom;
-        this.kilometres = kilometres;
-    }
-
-    public Route() {
-    }
-
-
-    public String getTownTo() {
-        return townTo;
-    }
-
-    public void setTownTo(String townTo) {
-        this.townTo = townTo;
-    }
-
-    public String getTownFrom() {
-        return townFrom;
-    }
-
-    public void setTownFrom(String townFrom) {
-        this.townFrom = townFrom;
-    }
-
-    public Integer getKilometres() {
-        return kilometres;
-    }
-
-    public void setKilometres(Integer kilometres) {
-        this.kilometres = kilometres;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getId() {
-        return id;
-    }
 }

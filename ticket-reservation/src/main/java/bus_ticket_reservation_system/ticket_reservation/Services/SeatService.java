@@ -7,23 +7,19 @@ import bus_ticket_reservation_system.ticket_reservation.Repositories.SeatReposit
 import bus_ticket_reservation_system.ticket_reservation.Repositories.TicketRepository;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.TripRepository;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class SeatService {
     private final SeatRepository seatRepository;
     private final TripRepository tripRepository;
     private final TicketRepository ticketRepository;
     private final BusRepository busRepository;
 
-    public SeatService(SeatRepository seatRepository, TripRepository tripRepository, TicketRepository ticketRepository, BusRepository busRepository) {
-        this.seatRepository = seatRepository;
-        this.tripRepository = tripRepository;
-        this.ticketRepository = ticketRepository;
-        this.busRepository = busRepository;
-    }
 
     public List<Seat> getSeatsByBusId(Long busId) {
         return seatRepository.findByBusId(busId);

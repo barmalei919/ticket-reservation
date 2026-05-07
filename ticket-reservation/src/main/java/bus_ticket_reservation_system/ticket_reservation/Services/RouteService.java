@@ -4,19 +4,17 @@ import bus_ticket_reservation_system.ticket_reservation.Repositories.RouteReposi
 import bus_ticket_reservation_system.ticket_reservation.Repositories.TripRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class RouteService {
     private final RouteRepository routeRepository;
     private final TripRepository tripRepository;
 
-    public RouteService(RouteRepository routeRepository, TripRepository tripRepository) {
-        this.routeRepository = routeRepository;
-        this.tripRepository = tripRepository;
-    }
 
     public Route createRoute(Route route) {
         if (route.getTownFrom().equals(route.getTownTo()) || route.getKilometres() <= 0) {

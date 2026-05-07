@@ -26,4 +26,6 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     List<Trip> findOverlappingTrips(@Param("busId") Long busId,
                                     @Param("start") LocalDateTime start,
                                     @Param("end") LocalDateTime end);
+
+    boolean existsByRouteId(Long routeId);
 }

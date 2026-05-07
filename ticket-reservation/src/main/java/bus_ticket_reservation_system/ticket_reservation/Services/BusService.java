@@ -5,6 +5,7 @@ import bus_ticket_reservation_system.ticket_reservation.Repositories.BusReposito
 import bus_ticket_reservation_system.ticket_reservation.Repositories.SeatRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -12,15 +13,11 @@ import java.util.List;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class BusService {
     private final BusRepository busRepository;
     private final SeatRepository seatRepository;
 
-    public BusService(BusRepository busRepository, SeatRepository seatRepository) {
-        this.busRepository = busRepository;
-        this.seatRepository = seatRepository;
-    }
-    @Transactional
     public Bus createBus(Bus bus, int capacity) {
         if (busRepository.existsByPlateNumber(bus.getPlateNumber())) {
             throw new IllegalArgumentException("Автобус с таким Гос.Номером уже есть в БД");
@@ -30,9 +27,9 @@ public class BusService {
         }
         bus.setCapacity(capacity);
         Bus savedBus = busRepository.save(bus);
-        List<Seat> generatedSeats = new ArrayList<>(); // Создаем временный список
+        List<Seat> generatedSeats = new ArrayList<>();
         for (int i = 1; i <= capacity; i++) {
-            Seat seat = new Seat(savedBus, (long) i);
+            Seat seat = new Seat(savedBus, i);
             seatRepository.save(seat);
             generatedSeats.add(seat);
         }

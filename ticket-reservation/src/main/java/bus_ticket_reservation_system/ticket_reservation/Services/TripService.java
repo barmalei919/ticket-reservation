@@ -4,6 +4,7 @@ import bus_ticket_reservation_system.ticket_reservation.Enums.TripStatus;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.TripRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,13 +12,12 @@ import java.util.List;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class TripService {
-        private final TripRepository tripRepository;
+    private final TripRepository tripRepository;
 
 
-    public TripService(TripRepository tripRepository) {
-        this.tripRepository = tripRepository;
-    }
+
 
     public List<Trip> findTrips(String from, String to) {
         return tripRepository.findByRouteTownFromAndRouteTownToIgnoreCase(from,to);
