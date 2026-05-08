@@ -1,6 +1,7 @@
 package bus_ticket_reservation_system.ticket_reservation.Services;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Passenger;
 import bus_ticket_reservation_system.ticket_reservation.Entities.User;
+import bus_ticket_reservation_system.ticket_reservation.Enums.UserRole;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.PassengerRepository;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -53,11 +54,19 @@ public class UserService {
                 .orElseThrow(()-> new EntityNotFoundException("Пользователя с таким айди не найдено"));
     }
 
+
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-
+    public void deleteUser(Long id) {
+        User userToDelete = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        if (userToDelete.getRole() == UserRole.ADMIN) {
+            throw new RuntimeException("Нельзя удалять пользователя с ролью ADMIN");
+        }
+        userRepository.deleteById(id);
+    }
 
 
 }

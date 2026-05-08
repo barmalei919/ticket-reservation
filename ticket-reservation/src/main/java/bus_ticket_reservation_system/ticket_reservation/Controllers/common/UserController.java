@@ -1,4 +1,4 @@
-package bus_ticket_reservation_system.ticket_reservation.Controllers;
+package bus_ticket_reservation_system.ticket_reservation.Controllers.common;
 
 import bus_ticket_reservation_system.ticket_reservation.Entities.Passenger;
 import bus_ticket_reservation_system.ticket_reservation.Entities.User;
