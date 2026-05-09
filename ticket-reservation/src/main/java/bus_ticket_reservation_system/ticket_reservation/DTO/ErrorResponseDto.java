@@ -1,4 +1,4 @@
-package bus_ticket_reservation_system.ticket_reservation.Controllers.exception;
+package bus_ticket_reservation_system.ticket_reservation.DTO;
 
 import java.time.LocalDateTime;
 

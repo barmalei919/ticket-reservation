@@ -1,5 +1,6 @@
 package bus_ticket_reservation_system.ticket_reservation.Controllers.exception;
 
+import bus_ticket_reservation_system.ticket_reservation.DTO.ErrorResponseDto;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
