@@ -1,6 +1,9 @@
 package bus_ticket_reservation_system.ticket_reservation.Services;
+import bus_ticket_reservation_system.ticket_reservation.DTO.BusRequestDto;
+import bus_ticket_reservation_system.ticket_reservation.DTO.BusResponseDto;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Bus;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Seat;
+import bus_ticket_reservation_system.ticket_reservation.Mappers.BusMapper;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.BusRepository;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.SeatRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -17,28 +20,26 @@ import java.util.List;
 public class BusService {
     private final BusRepository busRepository;
     private final SeatRepository seatRepository;
+    private final BusMapper busMapper;
 
-    public Bus createBus(Bus bus, int capacity) {
-        if (busRepository.existsByPlateNumber(bus.getPlateNumber())) {
+    public BusResponseDto createBus(BusRequestDto dto) {
+        if (busRepository.existsByPlateNumber(dto.plateNumber())) {
             throw new IllegalArgumentException("Автобус с таким Гос.Номером уже есть в БД");
         }
-        if (capacity <= 0 || capacity > 50) {
+        if (dto.capacity() <= 0 || dto.capacity() > 50) {
             throw new IllegalArgumentException("Количество мест должно быть от 1 до 50");
         }
-        bus.setCapacity(capacity);
+        Bus bus = busMapper.toEntity(dto);
         Bus savedBus = busRepository.save(bus);
-        List<Seat> generatedSeats = new ArrayList<>();
-        for (int i = 1; i <= capacity; i++) {
-            Seat seat = new Seat(savedBus, i);
-            seatRepository.save(seat);
-            generatedSeats.add(seat);
+        List<Seat> seats = new ArrayList<>();
+        for (int i = 1; i <= dto.capacity(); i++) {
+            seats.add(seatRepository.save(new Seat(savedBus, i)));
         }
-        savedBus.setSeatsList(generatedSeats);
-        return savedBus;
+        return busMapper.toResponseDto(savedBus);
     }
 
-    public List<Bus> getAllBuses() {
-        return busRepository.findAll();
+    public List<BusResponseDto> getAllBuses() {
+        return busMapper.toResponseDtoList(busRepository.findAll());
     }
 
     public Bus getBusById(Long id) {

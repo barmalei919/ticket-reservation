@@ -1,9 +1,9 @@
-package bus_ticket_reservation_system.ticket_reservation.Controllers;
+package bus_ticket_reservation_system.ticket_reservation.Controllers.common;
 
+import bus_ticket_reservation_system.ticket_reservation.DTO.RouteRequestDTO;
+import bus_ticket_reservation_system.ticket_reservation.DTO.RouteResponseDTO;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Route;
-import bus_ticket_reservation_system.ticket_reservation.Repositories.RouteRepository;
 import bus_ticket_reservation_system.ticket_reservation.Services.RouteService;
-import bus_ticket_reservation_system.ticket_reservation.Services.TripService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,12 +20,12 @@ public class RouteController {
     }
 
     @PostMapping
-    public ResponseEntity<Route> createRoute(@RequestBody Route route) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(routeService.createRoute(route));
+    public ResponseEntity<RouteResponseDTO> createRoute(@RequestBody RouteRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(routeService.createRoute(dto));
     }
 
     @GetMapping
-    public ResponseEntity<List<Route>> findAllRoutes(
+    public ResponseEntity<List<RouteResponseDTO>> findAllRoutes(
             @RequestParam(required = false) String townFrom,
             @RequestParam(required = false) String townTo) {
         if (townFrom != null) {
@@ -39,14 +39,14 @@ public class RouteController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Route> findRouteById(@PathVariable Long id) {
+    public ResponseEntity<RouteResponseDTO> findRouteById(@PathVariable Long id) {
         return ResponseEntity.ok(routeService.getRouteById(id));
     }
 
     @PutMapping("/{id}")
-        public  ResponseEntity<Route> updateRoute(@PathVariable Long id,
-                @RequestBody Route route) {
-        return ResponseEntity.ok(routeService.updateRoute(id,route));
+        public  ResponseEntity<RouteResponseDTO> updateRoute(@PathVariable Long id,
+                @RequestBody RouteRequestDTO dto) {
+        return ResponseEntity.ok(routeService.updateRoute(id,dto));
     }
 
     @DeleteMapping("/{id}")

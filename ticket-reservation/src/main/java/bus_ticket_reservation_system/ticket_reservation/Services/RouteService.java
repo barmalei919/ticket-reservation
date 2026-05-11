@@ -1,5 +1,8 @@
 package bus_ticket_reservation_system.ticket_reservation.Services;
+import bus_ticket_reservation_system.ticket_reservation.DTO.RouteRequestDTO;
+import bus_ticket_reservation_system.ticket_reservation.DTO.RouteResponseDTO;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Route;
+import bus_ticket_reservation_system.ticket_reservation.Mappers.RouteMapper;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.RouteRepository;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.TripRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -14,53 +17,58 @@ import java.util.List;
 public class RouteService {
     private final RouteRepository routeRepository;
     private final TripRepository tripRepository;
+    private final RouteMapper routeMapper;
 
-
-    public Route createRoute(Route route) {
-        if (route.getTownFrom().equals(route.getTownTo()) || route.getKilometres() <= 0) {
+    @Transactional
+    public RouteResponseDTO createRoute(RouteRequestDTO dto) {
+        if (dto.townFrom().equals(dto.townTo()) || dto.kilometres() <= 0) {
            throw  new IllegalArgumentException("Некорректное значение: города не могут совпадать, а расстояние должно быть больше 0");
         }
-        return routeRepository.save(route);
+        var route = routeMapper.toEntity(dto);
+        var savedRoute = routeRepository.save(route);
+        return routeMapper.toResponseDto(route);
     }
 
-    public List<Route> getAllRoutes() {
-        return routeRepository.findAll();
+    public List<RouteResponseDTO> getAllRoutes() {
+        return routeMapper.toResponseDtoList(routeRepository.findAll());
     }
 
-    public List<Route> findByTownFrom(String townFrom) {
-        return routeRepository.findByTownFrom(townFrom);
+    public List<RouteResponseDTO> findByTownFrom(String townFrom) {
+        return routeMapper.toResponseDtoList(routeRepository.findByTownFrom(townFrom));
     }
 
-    public List<Route> findByTownTo(String townTo) {
-        return routeRepository.findByTownTo(townTo);
+    public List<RouteResponseDTO> findByTownTo(String townTo) {
+        return routeMapper.toResponseDtoList(routeRepository.findByTownTo(townTo));
     }
 
-    public Route getRouteById(Long id) {
+    public RouteResponseDTO getRouteById(Long id) {
         return routeRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Route c таким айди не найден"));
+                .map(routeMapper::toResponseDto)
+                .orElseThrow(() -> new EntityNotFoundException("Route с ID " + id + " не найден"));
     }
 
     @Transactional
-    public Route updateRoute(Long id, Route routeDetails) {
-        var updatedRoute = routeRepository.findById(id)
-                .orElseThrow(()-> new EntityNotFoundException("Route с таким айди не найден"));
-        updatedRoute.setTownFrom(routeDetails.getTownFrom());
-        updatedRoute.setTownTo(routeDetails.getTownTo());
-        updatedRoute.setKilometres(routeDetails.getKilometres());
-        return routeRepository.save(updatedRoute);
+    public RouteResponseDTO updateRoute(Long id, RouteRequestDTO dto) {
+        Route route = routeRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Route не найден"));
+
+        route.setTownFrom(dto.townFrom());
+        route.setTownTo(dto.townTo());
+        route.setKilometres(dto.kilometres());
+
+        return routeMapper.toResponseDto(routeRepository.save(route));
     }
 
     @Transactional
     public void deleteRoute(Long id) {
         if (!routeRepository.existsById(id)) {
-            throw new IllegalArgumentException("Маршрут не найден");
+            throw new EntityNotFoundException("Маршрут не найден");
         }
         if (tripRepository.existsByRouteId(id)) {
-            throw new IllegalStateException("Нельзя удалить маршрут: на него назначены активные рейсы!");
+            throw new IllegalStateException("Нельзя удалить: на маршрут назначены активные рейсы!");
         }
-        else {
-            routeRepository.deleteById(id);
-        }
+        routeRepository.deleteById(id);
     }
-
 }
+
+

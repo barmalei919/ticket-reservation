@@ -1,6 +1,8 @@
-package bus_ticket_reservation_system.ticket_reservation.Controllers;
+package bus_ticket_reservation_system.ticket_reservation.Controllers.common;
 
 
+import bus_ticket_reservation_system.ticket_reservation.DTO.TripRequestDTO;
+import bus_ticket_reservation_system.ticket_reservation.DTO.TripResponseDTO;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Trip;
 import bus_ticket_reservation_system.ticket_reservation.Services.TripService;
 import org.springframework.http.HttpStatus;
@@ -19,14 +21,14 @@ public class TripController {
     }
 
     @PostMapping
-    public ResponseEntity<Trip> createTrip(@RequestBody Trip trip) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(tripService.createTrip(trip));
+    public ResponseEntity<TripResponseDTO> createTrip(@RequestBody TripRequestDTO dto) {
+        return ResponseEntity.ok(tripService.createTrip(dto));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<Trip>> findTrips(@RequestParam String from, @RequestParam String to)
+    public ResponseEntity<List<TripResponseDTO>> findTrips(@RequestParam String from, @RequestParam String to)
     {
-        List<Trip> trips = tripService.findTrips(from,to);
+        List<TripResponseDTO> trips = tripService.findTrips(from, to);
         return ResponseEntity.ok(trips);
     }
 

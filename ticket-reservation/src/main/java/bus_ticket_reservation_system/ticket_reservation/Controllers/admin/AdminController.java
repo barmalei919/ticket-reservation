@@ -1,6 +1,9 @@
 package bus_ticket_reservation_system.ticket_reservation.Controllers.admin;
 
 import bus_ticket_reservation_system.ticket_reservation.DTO.BookingResponseDTO;
+import bus_ticket_reservation_system.ticket_reservation.DTO.BusRequestDto;
+import bus_ticket_reservation_system.ticket_reservation.DTO.BusResponseDto;
+import bus_ticket_reservation_system.ticket_reservation.DTO.UserResponseDTO;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Bus;
 import bus_ticket_reservation_system.ticket_reservation.Entities.User;
 import bus_ticket_reservation_system.ticket_reservation.Services.BookingService;
@@ -21,16 +24,15 @@ public class AdminController {
     private final BookingService bookingService;
 
     @GetMapping("/users")
-    public ResponseEntity<List<User>> getAllUsers() {
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @PostMapping("/buses")
-    public ResponseEntity<Bus> createBus(
-            @RequestBody Bus bus,
-            @RequestParam int capacity
+    public ResponseEntity<BusResponseDto> createBus(
+            @RequestBody BusRequestDto dto
     ) {
-        return ResponseEntity.ok(busService.createBus(bus,capacity));
+        return ResponseEntity.ok(busService.createBus(dto));
     }
 
     @GetMapping("/bookings/all")

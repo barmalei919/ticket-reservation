@@ -1,11 +1,17 @@
 package bus_ticket_reservation_system.ticket_reservation.Services;
+import bus_ticket_reservation_system.ticket_reservation.DTO.TripRequestDTO;
+import bus_ticket_reservation_system.ticket_reservation.DTO.TripResponseDTO;
+import bus_ticket_reservation_system.ticket_reservation.Entities.Bus;
+import bus_ticket_reservation_system.ticket_reservation.Entities.Route;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Trip;
 import bus_ticket_reservation_system.ticket_reservation.Enums.TripStatus;
+import bus_ticket_reservation_system.ticket_reservation.Mappers.TripMapper;
+import bus_ticket_reservation_system.ticket_reservation.Repositories.BusRepository;
+import bus_ticket_reservation_system.ticket_reservation.Repositories.RouteRepository;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.TripRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,16 +21,18 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TripService {
     private final TripRepository tripRepository;
+    private final TripMapper tripMapper;
+    private final BusRepository busRepository;
+    private final RouteRepository routeRepository;
 
 
-
-
-    public List<Trip> findTrips(String from, String to) {
-        return tripRepository.findByRouteTownFromAndRouteTownToIgnoreCase(from,to);
+    public List<TripResponseDTO> findTrips(String from, String to) {
+        List<Trip> trips = tripRepository.findByRouteTownFromAndRouteTownToIgnoreCase(from, to);
+        return tripMapper.toResponseDtoList(trips);
     }
 
 
-    public Trip cancelTrip(Long id) {
+    public TripResponseDTO cancelTrip(Long id) {
         var cancelledTrip = tripRepository.findById(id).
                 orElseThrow(() -> new EntityNotFoundException("Not found trip by this id: "+id));
         if (cancelledTrip.getStatus() == TripStatus.CANCELLED) {
@@ -35,23 +43,37 @@ public class TripService {
         if (cancelledTrip.getTickets()!=null) {
             cancelledTrip.getTickets().forEach(ticket -> ticket.setStatus(TripStatus.CANCELLED));
         }
-        return tripRepository.save(cancelledTrip);
+
+        return tripMapper.toResponseDto(cancelledTrip);
     }
 
-    public Trip createTrip(Trip trip) {
+    public TripResponseDTO createTrip(TripRequestDTO dto) {
+        Bus bus = busRepository.findById(dto.busId())
+                .orElseThrow(() -> new EntityNotFoundException("Автобус не найден"));
+        Route route = routeRepository.findById(dto.routeId())
+                .orElseThrow(() -> new EntityNotFoundException("Маршрут не найден"));
         List<Trip> overlaps = tripRepository.findOverlappingTrips(
-                trip.getBus().getId(),
-                trip.getTimeStart(),
-                trip.getTimeEnd()
+                dto.busId(),
+                dto.timeStart(),
+                dto.timeEnd()
         );
         if (!overlaps.isEmpty()) {
             throw new IllegalStateException("Автобус занят");
         }
-        return tripRepository.save(trip);
+        Trip trip = new Trip();
+        trip.setBus(bus);
+        trip.setRoute(route);
+        trip.setTimeStart(dto.timeStart());
+        trip.setTimeEnd(dto.timeEnd());
+        trip.setPrice(dto.price());
+        trip.setStatus(TripStatus.PENDING);
+        Trip savedTrip = tripRepository.save(trip);
+        return tripMapper.toResponseDto(savedTrip);
     }
 
-    public List<Trip> findAllTrips() {
-        return tripRepository.findAll();
+    public List<TripResponseDTO> findAllTrips() {
+        List<Trip> trips = tripRepository.findAll();
+        return tripMapper.toResponseDtoList(trips);
     }
 
     public int getAvailableSeatsCount(Long tripId) {

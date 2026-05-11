@@ -1,9 +1,12 @@
-package bus_ticket_reservation_system.ticket_reservation.Controllers;
+package bus_ticket_reservation_system.ticket_reservation.Controllers.common;
 
+import bus_ticket_reservation_system.ticket_reservation.DTO.BusRequestDto;
+import bus_ticket_reservation_system.ticket_reservation.DTO.BusResponseDto;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Bus;
 import bus_ticket_reservation_system.ticket_reservation.Services.BusService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,13 +21,14 @@ public class BusController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Bus>> getAllBuses() {
+    public ResponseEntity<List<BusResponseDto>> getAllBuses() {
         return ResponseEntity.ok(busService.getAllBuses());
     }
 
     @PostMapping
-    public ResponseEntity<Bus> addBus(@RequestBody Bus bus, @RequestParam int capacity) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(busService.createBus(bus,capacity));
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BusResponseDto> addBus(@RequestBody BusRequestDto dto) {
+        return ResponseEntity.ok(busService.createBus(dto));
     }
 
     @GetMapping("/{id}")

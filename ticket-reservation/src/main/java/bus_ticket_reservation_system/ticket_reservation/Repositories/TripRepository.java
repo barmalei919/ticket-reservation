@@ -1,11 +1,7 @@
 package bus_ticket_reservation_system.ticket_reservation.Repositories;
 
-import bus_ticket_reservation_system.ticket_reservation.Entities.Bus;
-import bus_ticket_reservation_system.ticket_reservation.Entities.Route;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Trip;
-import bus_ticket_reservation_system.ticket_reservation.Enums.TripStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;

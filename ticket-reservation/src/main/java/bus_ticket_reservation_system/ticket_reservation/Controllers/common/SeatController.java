@@ -1,7 +1,7 @@
-package bus_ticket_reservation_system.ticket_reservation.Controllers;
+package bus_ticket_reservation_system.ticket_reservation.Controllers.common;
 
+import bus_ticket_reservation_system.ticket_reservation.DTO.SeatResponseDTO;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Seat;
-import bus_ticket_reservation_system.ticket_reservation.Repositories.SeatRepository;
 import bus_ticket_reservation_system.ticket_reservation.Services.SeatService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,12 +18,12 @@ public class SeatController {
     }
 
     @GetMapping("/bus/{busId}")
-    public ResponseEntity<List<Seat>> getSeatsByBus(@PathVariable Long busId) {
+    public ResponseEntity<List<SeatResponseDTO>> getSeatsByBus(@PathVariable Long busId) {
         return ResponseEntity.ok(seatService.getSeatsByBusId(busId));
     }
 
     @GetMapping("/available/{tripId}")
-    public ResponseEntity<List<Seat>> getAvailableSeats(@PathVariable Long tripId) {
+    public ResponseEntity<List<SeatResponseDTO>> getAvailableSeats(@PathVariable Long tripId) {
         return ResponseEntity.ok(seatService.getAvailableSeats(tripId));
     }
 
@@ -37,7 +37,7 @@ public class SeatController {
         return ResponseEntity.ok(seatService.isSeatAvailable(tripId, seatId));
     }
     @GetMapping("/find")
-    public ResponseEntity<Seat> getSeatByNumber(@RequestParam Long busId, @RequestParam Integer seatNumber) {
+    public ResponseEntity<SeatResponseDTO> getSeatByNumber(@RequestParam Long busId, @RequestParam Integer seatNumber) {
         return ResponseEntity.ok(seatService.getSeatByNumber(busId, seatNumber));
     }
 }

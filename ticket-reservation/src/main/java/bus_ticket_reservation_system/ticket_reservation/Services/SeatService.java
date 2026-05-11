@@ -1,7 +1,9 @@
 package bus_ticket_reservation_system.ticket_reservation.Services;
+import bus_ticket_reservation_system.ticket_reservation.DTO.SeatResponseDTO;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Bus;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Seat;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Trip;
+import bus_ticket_reservation_system.ticket_reservation.Mappers.SeatMapper;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.BusRepository;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.SeatRepository;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.TicketRepository;
@@ -19,19 +21,28 @@ public class SeatService {
     private final TripRepository tripRepository;
     private final TicketRepository ticketRepository;
     private final BusRepository busRepository;
+    private final SeatMapper seatMapper;
 
 
-    public List<Seat> getSeatsByBusId(Long busId) {
-        return seatRepository.findByBusId(busId);
+    public List<SeatResponseDTO> getSeatsByBusId(Long busId) {
+        return seatMapper.toResponseDtoList(seatRepository.findByBusId(busId));
     }
 
-    public List<Seat> getAvailableSeats(Long tripId) {
-        Trip trip = tripRepository.findById(tripId).
-                orElseThrow(()-> new EntityNotFoundException("Рейс не найден"));
+    public List<SeatResponseDTO> getAvailableSeats(Long tripId) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new EntityNotFoundException("Рейс не найден"));
         List<Seat> allSeats = trip.getBus().getSeatsList();
-        List<Seat> busySeats  = ticketRepository.findOccupiedSeatsByTripId(tripId);
-        allSeats.removeAll(busySeats);
-        return allSeats;
+
+        List<Long> busySeatIds = ticketRepository.findOccupiedSeatsByTripId(tripId)
+                .stream()
+                .map(Seat::getId)
+                .toList();
+
+        List<Seat> available = allSeats.stream()
+                .filter(seat -> !busySeatIds.contains(seat.getId()))
+                .toList();
+
+        return seatMapper.toResponseDtoList(available);
     }
 
     public boolean isSeatAvailable(Long tripId, Long seatId) {
@@ -45,12 +56,12 @@ public class SeatService {
         return !ticketRepository.existsByTripAndSeat(trip,seat);
     }
 
-    public Seat getSeatByNumber(Long busId, Integer seatId) {
+    public SeatResponseDTO getSeatByNumber(Long busId, Integer seatId) {
         if (!busRepository.existsById(busId)) {
             throw new EntityNotFoundException("Автобус с ID " + busId + " не найден");
         }
-        return seatRepository.findByBusIdAndSeatNumber(busId,seatId)
-                .orElseThrow(() -> new EntityNotFoundException("Ошибка: Место " + seatId + " не найдено для автобуса " + busId));
+        return seatMapper.toResponseDto(seatRepository.findByBusIdAndSeatNumber(busId,seatId)
+                .orElseThrow(() -> new EntityNotFoundException("Ошибка: Место " + seatId + " не найдено для автобуса " + busId)));
     }
 
     public int getAvailableSeatsCount(Long tripId) {

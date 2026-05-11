@@ -1,9 +1,8 @@
-package bus_ticket_reservation_system.ticket_reservation.Controllers;
+package bus_ticket_reservation_system.ticket_reservation.Controllers.common;
 
+import bus_ticket_reservation_system.ticket_reservation.DTO.BookingRequestDTO;
 import bus_ticket_reservation_system.ticket_reservation.DTO.BookingResponseDTO;
-import bus_ticket_reservation_system.ticket_reservation.Entities.Passenger;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Seat;
-import bus_ticket_reservation_system.ticket_reservation.Entities.Ticket;
 import bus_ticket_reservation_system.ticket_reservation.Services.BookingService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,11 +28,9 @@ public class BookingController {
     }
 
     @PostMapping("/book")
-    public ResponseEntity<BookingResponseDTO> bookTicket(
-            @RequestParam Long tripId,
-            @RequestParam Long seatId,
-            @RequestParam Long userId) {
-        return ResponseEntity.ok(bookingService.bookTicket(tripId, seatId, userId));
+    public ResponseEntity<BookingResponseDTO> bookTicket(@RequestBody BookingRequestDTO dto,
+                                                         @RequestParam Long userId) {
+        return ResponseEntity.ok(bookingService.bookTicket(dto.tripId(), dto.seatId(), userId));
     }
 
     @DeleteMapping("/cancel/{ticketId}")

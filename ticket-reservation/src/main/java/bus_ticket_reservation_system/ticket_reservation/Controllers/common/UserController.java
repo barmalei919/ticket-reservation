@@ -1,7 +1,10 @@
 package bus_ticket_reservation_system.ticket_reservation.Controllers.common;
 
+import bus_ticket_reservation_system.ticket_reservation.DTO.UserRequestDTO;
+import bus_ticket_reservation_system.ticket_reservation.DTO.UserResponseDTO;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Passenger;
 import bus_ticket_reservation_system.ticket_reservation.Entities.User;
+import bus_ticket_reservation_system.ticket_reservation.Mappers.UserMapper;
 import bus_ticket_reservation_system.ticket_reservation.Services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,17 +17,18 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final UserMapper userMapper;
 
     @PostMapping("/register")
-    public ResponseEntity<User> register(
-            @RequestBody User user) {
-        return  ResponseEntity.ok(userService.registerUser(user));
+    public ResponseEntity<UserResponseDTO> register(
+            @RequestBody UserRequestDTO dto) {
+        return  ResponseEntity.ok(userService.registerUser(dto));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody User loginRequest) {
+    public ResponseEntity<? extends Object> login(@RequestBody UserRequestDTO dto) {
         try {
-            User user = userService.login(loginRequest.getEmail(), loginRequest.getPassword());
+            UserResponseDTO user = userService.login(dto.email(), dto.password());
             return ResponseEntity.ok(user);
         } catch (Exception e) {
             return ResponseEntity.status(401).body(e.getMessage());
@@ -42,7 +46,7 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> getAll() {
+    public ResponseEntity<List<UserResponseDTO>> getAll() {
         return  ResponseEntity.ok(userService.getAllUsers());
     }
 
