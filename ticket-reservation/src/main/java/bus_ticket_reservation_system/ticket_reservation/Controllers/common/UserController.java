@@ -1,13 +1,17 @@
 package bus_ticket_reservation_system.ticket_reservation.Controllers.common;
 
+import bus_ticket_reservation_system.ticket_reservation.DTO.JWTAuthDTO;
 import bus_ticket_reservation_system.ticket_reservation.DTO.UserRequestDTO;
 import bus_ticket_reservation_system.ticket_reservation.DTO.UserResponseDTO;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Passenger;
 import bus_ticket_reservation_system.ticket_reservation.Entities.User;
 import bus_ticket_reservation_system.ticket_reservation.Mappers.UserMapper;
 import bus_ticket_reservation_system.ticket_reservation.Services.UserService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,22 +24,27 @@ public class UserController {
     private final UserMapper userMapper;
 
     @PostMapping("/register")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<UserResponseDTO> register(
             @RequestBody UserRequestDTO dto) {
         return  ResponseEntity.ok(userService.registerUser(dto));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<? extends Object> login(@RequestBody UserRequestDTO dto) {
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<?> login(@RequestBody UserRequestDTO dto) {
         try {
-            UserResponseDTO user = userService.login(dto.email(), dto.password());
-            return ResponseEntity.ok(user);
+            JWTAuthDTO authData = userService.login(dto.email(), dto.password());
+            return ResponseEntity.ok(authData);
+        } catch (IllegalArgumentException | EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(401).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ошибка сервера");
         }
     }
 
     @PostMapping("/{userId}/profile")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<String> createProfile(@PathVariable Long userId, @RequestBody Passenger passenger) {
         try {
             userService.linkPassengerToUser(userId, passenger);
@@ -46,6 +55,7 @@ public class UserController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponseDTO>> getAll() {
         return  ResponseEntity.ok(userService.getAllUsers());
     }
