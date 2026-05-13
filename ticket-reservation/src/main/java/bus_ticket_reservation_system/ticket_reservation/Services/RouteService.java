@@ -26,7 +26,7 @@ public class RouteService {
         }
         var route = routeMapper.toEntity(dto);
         var savedRoute = routeRepository.save(route);
-        return routeMapper.toResponseDto(route);
+        return routeMapper.toResponseDto(savedRoute);
     }
 
     public List<RouteResponseDTO> getAllRoutes() {

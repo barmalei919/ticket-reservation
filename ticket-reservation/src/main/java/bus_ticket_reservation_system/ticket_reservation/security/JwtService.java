@@ -18,8 +18,14 @@ import java.time.ZoneId;
 public class JwtService {
 
     private static final Logger LOGGER = LogManager.getLogger(JwtService.class);
-    @Value("CKGyKThawpJFyP1gvvgDgdedLnk4JR8z3Ek9SWS1zHW")
+    @Value("${jwt.secret}")
     private String jwtSecret;
+
+    @Value("${jwt.access-expiration-minutes}")
+    private int accessExpirationMinutes;
+
+    @Value("${jwt.refresh-expiration-days}")
+    private int refreshExpirationDays;
 
     public JWTAuthDTO generateAuthToken(String email) {
         JWTAuthDTO jwtAuthDTO = new JWTAuthDTO();
@@ -70,12 +76,13 @@ public class JwtService {
     }
 
     private String generateJwtToken(String email) {
-        Date date =  Date.from(LocalDateTime.now().plusMinutes(1).atZone(ZoneId.systemDefault()).toInstant());
+        Date date = Date.from(LocalDateTime.now().plusMinutes(accessExpirationMinutes).atZone(ZoneId.systemDefault()).toInstant());
         return Jwts.builder()
                 .subject(email).expiration(date).signWith(getSignInKey()).compact();
     }
+
     private String generateRefreshToken(String email) {
-        Date date =  Date.from(LocalDateTime.now().plusDays(1).atZone(ZoneId.systemDefault()).toInstant());
+        Date date = Date.from(LocalDateTime.now().plusDays(refreshExpirationDays).atZone(ZoneId.systemDefault()).toInstant());
         return Jwts.builder()
                 .subject(email).expiration(date).signWith(getSignInKey()).compact();
     }

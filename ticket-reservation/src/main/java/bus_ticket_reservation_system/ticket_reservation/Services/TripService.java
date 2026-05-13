@@ -4,6 +4,7 @@ import bus_ticket_reservation_system.ticket_reservation.DTO.TripResponseDTO;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Bus;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Route;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Trip;
+import bus_ticket_reservation_system.ticket_reservation.Enums.TicketStatus;
 import bus_ticket_reservation_system.ticket_reservation.Enums.TripStatus;
 import bus_ticket_reservation_system.ticket_reservation.Mappers.TripMapper;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.BusRepository;
@@ -40,8 +41,8 @@ public class TripService {
         }
         cancelledTrip.setStatus(TripStatus.CANCELLED);
 
-        if (cancelledTrip.getTickets()!=null) {
-            cancelledTrip.getTickets().forEach(ticket -> ticket.setStatus(TripStatus.CANCELLED));
+        if (cancelledTrip.getTickets() != null) {
+            cancelledTrip.getTickets().forEach(ticket -> ticket.setTicketStatus(TicketStatus.CANCELLED));
         }
 
         return tripMapper.toResponseDto(cancelledTrip);
