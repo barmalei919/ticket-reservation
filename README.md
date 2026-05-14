@@ -1,62 +1,166 @@
 # Bus Ticket Reservation System
 
+REST API бэкенд для онлайн-бронирования автобусных билетов с JWT-аутентификацией, ролевой моделью доступа и статическим фронтендом.
+
+## Стек технологий
+
+- **Java 17**, **Spring Boot**
+- **Spring Security** — JWT (Access + Refresh токены), BCrypt
+- **Spring Data JPA** / **Hibernate**
+- **PostgreSQL**
+- **Lombok**, **Maven**
+
+## Возможности
+
+- Регистрация и вход с выдачей JWT
+- Ролевая модель: `USER` и `ADMIN`
+- Поиск рейсов по маршруту
+- Бронирование, оплата и отмена билетов
+- Профиль пассажира
+- DTO + Mapper паттерн
+- Глобальная обработка ошибок (`@ControllerAdvice`)
+- Unit-тесты для сервисного слоя
+
+## API
+
+### Пользователи
+
+| Метод | Эндпоинт | Доступ | Описание |
+|-------|----------|--------|----------|
+| POST | `/api/users/register` | Публичный | Регистрация |
+| POST | `/api/users/login` | Публичный | Вход, возвращает `{ token, refreshToken }` |
+| GET | `/api/users/me` | Авторизован | Текущий пользователь |
+| POST | `/api/users/{userId}/profile` | Авторизован | Создать профиль пассажира |
+| GET | `/api/users` | ADMIN | Все пользователи |
+
+### Рейсы
+
+| Метод | Эндпоинт | Доступ | Описание |
+|-------|----------|--------|----------|
+| GET | `/api/trips/search?from=&to=` | Публичный | Поиск рейсов |
+| GET | `/api/trips/{id}/seats` | Публичный | Количество свободных мест |
+| POST | `/api/trips` | ADMIN | Создать рейс |
+
+### Бронирование
+
+| Метод | Эндпоинт | Доступ | Описание |
+|-------|----------|--------|----------|
+| POST | `/api/bookings/book?userId=` | Авторизован | Забронировать |
+| PATCH | `/api/bookings/{ticketId}/pay` | Авторизован | Оплатить |
+| DELETE | `/api/bookings/cancel/{ticketId}` | Авторизован | Отменить |
+| GET | `/api/bookings/my` | Авторизован | Мои билеты |
+| GET | `/api/bookings/available-seats?tripId=` | Авторизован | Свободные места |
+| GET | `/api/bookings/all` | ADMIN | Все бронирования |
+
+### Админ
+
+| Метод | Эндпоинт | Описание |
+|-------|----------|----------|
+| POST | `/api/admin/buses` | Добавить автобус |
+| GET | `/api/admin/users` | Все пользователи |
+| DELETE | `/api/admin/users/{id}` | Удалить пользователя |
+| GET | `/api/admin/bookings/all` | Все бронирования |
+
+## Запуск
+
+### Требования
+
+- Java 17+
+- PostgreSQL
+- Maven
+
+### Установка
+
+1. Клонировать репозиторий
+   ```bash
+   git clone https://github.com/barmalei919/ticket-reservation.git
+   cd ticket-reservation
+   ```
+
+2. Создать базу данных PostgreSQL
+   ```sql
+   CREATE DATABASE postgres;
+   ```
+
+3. Настроить `ticket-reservation/src/main/resources/application.properties`
+   ```properties
+   spring.datasource.url=jdbc:postgresql://localhost:5432/postgres
+   spring.datasource.username=your_username
+   spring.datasource.password=your_password
+
+   jwt.secret=your_base64_encoded_secret
+   jwt.access-expiration-minutes=30
+   jwt.refresh-expiration-days=1
+   ```
+
+4. Запустить
+   ```bash
+   mvn spring-boot:run
+   ```
+
+### Фронтенд
+
+После запуска доступен на `http://localhost:8080`.
+
+| Страница | URL |
+|----------|-----|
+| Главная | `/` |
+| Рейсы | `/trips.html` |
+| Бронирование | `/booking.html` |
+| Авторизация | `/auth.html` |
+| Профиль | `/profile.html` |
+| Админ | `/admin.html` |
+
+## Аутентификация
+
+Защищённые эндпоинты требуют заголовок:
+
+```
+Authorization: Bearer <access_token>
+```
+
+---
+
+# Bus Ticket Reservation System (English)
+
 REST API backend for online bus ticket booking with JWT authentication, role-based access control, and a static frontend.
 
 ## Tech Stack
 
 - **Java 17**, **Spring Boot**
-- **Spring Security** — JWT authentication (Access + Refresh tokens), BCrypt password hashing
-- **Spring Data JPA** / **Hibernate** — ORM, `@Transactional`
-- **PostgreSQL** — relational database
+- **Spring Security** — JWT (Access + Refresh tokens), BCrypt
+- **Spring Data JPA** / **Hibernate**
+- **PostgreSQL**
 - **Lombok**, **Maven**
 
 ## Features
 
-- User registration and login with JWT (Access: 30 min, Refresh: 1 day)
+- Registration and login with JWT
 - Role-based access: `USER` and `ADMIN`
-- Trip search by departure and destination
-- Seat availability check per trip
-- Booking flow: book → pay → cancel
-- Passenger profile linked to user account
-- Global exception handling via `@ControllerAdvice`
-- DTO + Mapper pattern for clean layer separation
-- Unit tests for `BusService` and `TripService`
-- Static frontend (HTML/CSS/JS)
+- Trip search by route
+- Booking, payment, and cancellation
+- Passenger profile
+- DTO + Mapper pattern
+- Global exception handling (`@ControllerAdvice`)
+- Unit tests for the service layer
 
-## Project Structure
+## API
 
-```
-src/main/java/.../
-├── Controllers/
-│   ├── admin/          # Admin-only endpoints
-│   └── common/         # Public and user endpoints
-├── Services/           # Business logic
-├── Repositories/       # Spring Data JPA interfaces
-├── Entities/           # JPA entities
-├── DTO/                # Request/Response DTOs
-├── Mappers/            # Entity ↔ DTO mapping
-├── Enums/              # TripStatus, TicketStatus, UserRole
-├── security/           # JwtService, JwtFilter, UserDetails
-└── config/             # SecurityConfig
-```
-
-## API Endpoints
-
-### Auth
+### Users
 
 | Method | Endpoint | Access | Description |
 |--------|----------|--------|-------------|
-| POST | `/api/users/register` | Public | Register new user |
+| POST | `/api/users/register` | Public | Register |
 | POST | `/api/users/login` | Public | Login, returns `{ token, refreshToken }` |
-| GET | `/api/users/me` | Authenticated | Current user info |
+| GET | `/api/users/me` | Authenticated | Current user |
 | POST | `/api/users/{userId}/profile` | Authenticated | Create passenger profile |
-| GET | `/api/users` | ADMIN | Get all users |
+| GET | `/api/users` | ADMIN | All users |
 
 ### Trips
 
 | Method | Endpoint | Access | Description |
 |--------|----------|--------|-------------|
-| GET | `/api/trips/search?from=&to=` | Public | Search trips by route |
+| GET | `/api/trips/search?from=&to=` | Public | Search trips |
 | GET | `/api/trips/{id}/seats` | Public | Available seats count |
 | POST | `/api/trips` | ADMIN | Create trip |
 
@@ -64,27 +168,21 @@ src/main/java/.../
 
 | Method | Endpoint | Access | Description |
 |--------|----------|--------|-------------|
-| POST | `/api/bookings/book?userId=` | Authenticated | Book a ticket |
-| PATCH | `/api/bookings/{ticketId}/pay` | Authenticated | Pay for ticket |
-| DELETE | `/api/bookings/cancel/{ticketId}` | Authenticated | Cancel booking |
-| GET | `/api/bookings/my` | Authenticated | My bookings |
-| GET | `/api/bookings/available-seats?tripId=` | Authenticated | List available seats |
+| POST | `/api/bookings/book?userId=` | Authenticated | Book ticket |
+| PATCH | `/api/bookings/{ticketId}/pay` | Authenticated | Pay |
+| DELETE | `/api/bookings/cancel/{ticketId}` | Authenticated | Cancel |
+| GET | `/api/bookings/my` | Authenticated | My tickets |
+| GET | `/api/bookings/available-seats?tripId=` | Authenticated | Available seats |
 | GET | `/api/bookings/all` | ADMIN | All bookings |
 
 ### Admin
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/admin/buses` | Create bus |
-| GET | `/api/admin/users` | Get all users |
+| POST | `/api/admin/buses` | Add bus |
+| GET | `/api/admin/users` | All users |
 | DELETE | `/api/admin/users/{id}` | Delete user |
 | GET | `/api/admin/bookings/all` | All bookings |
-
-### Other (Public)
-
-- `GET /api/buses/**` — bus info
-- `GET /api/routes/**` — route info
-- `GET /api/seats/available/**` — available seats
 
 ## Getting Started
 
@@ -96,20 +194,18 @@ src/main/java/.../
 
 ### Setup
 
-1. **Clone the repository**
+1. Clone the repository
    ```bash
    git clone https://github.com/barmalei919/ticket-reservation.git
    cd ticket-reservation
    ```
 
-2. **Create a PostgreSQL database**
+2. Create a PostgreSQL database
    ```sql
    CREATE DATABASE postgres;
    ```
 
-3. **Configure `application.properties`**
-
-   Edit `src/main/resources/application.properties`:
+3. Configure `ticket-reservation/src/main/resources/application.properties`
    ```properties
    spring.datasource.url=jdbc:postgresql://localhost:5432/postgres
    spring.datasource.username=your_username
@@ -120,36 +216,28 @@ src/main/java/.../
    jwt.refresh-expiration-days=1
    ```
 
-4. **Run the application**
+4. Run
    ```bash
    mvn spring-boot:run
    ```
 
-   The app will start on `http://localhost:8080`.
-
 ### Frontend
 
-Static pages are available at:
+Available at `http://localhost:8080` after startup.
 
 | Page | URL |
 |------|-----|
-| Home | `http://localhost:8080/` |
-| Trips | `http://localhost:8080/trips.html` |
-| Booking | `http://localhost:8080/booking.html` |
-| Auth | `http://localhost:8080/auth.html` |
-| Profile | `http://localhost:8080/profile.html` |
-| Admin | `http://localhost:8080/admin.html` |
+| Home | `/` |
+| Trips | `/trips.html` |
+| Booking | `/booking.html` |
+| Auth | `/auth.html` |
+| Profile | `/profile.html` |
+| Admin | `/admin.html` |
 
 ## Authentication
 
-All protected endpoints require a Bearer token in the `Authorization` header:
+Protected endpoints require the header:
 
 ```
 Authorization: Bearer <access_token>
-```
-
-On token expiry, use the refresh token:
-```
-POST /api/users/refresh
-{ "refreshToken": "..." }
 ```
