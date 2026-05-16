@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>АвтоБилет — Билеты на автобус</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="/" class="logo">🚌 АвтоБилет</a>
+    <nav class="nav" id="nav"></nav>
+</header>
+
+<div class="hero">
+    <h1>Билеты на автобус онлайн</h1>
+    <p>Поиск и бронирование рейсов по всем направлениям</p>
+
+    <div class="search-card">
+        <form id="searchForm">
+            <div class="search-row">
+                <div class="form-group">
+                    <label>Откуда</label>
+                    <input type="text" id="from" placeholder="Город отправления" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>Куда</label>
+                    <input type="text" id="to" placeholder="Город назначения" required autocomplete="off">
+                </div>
+                <button type="submit" class="btn btn-primary" style="height: 42px;">
+                    Найти рейсы
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="container">
+    <div class="features">
+        <div class="feature-card">
+            <div class="feature-icon">🚌</div>
+            <div class="feature-title">Удобный выбор</div>
+            <div class="feature-desc">Выбирайте место в автобусе заранее</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <div class="feature-title">Быстро</div>
+            <div class="feature-desc">Бронирование за несколько кликов</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🔒</div>
+            <div class="feature-title">Надёжно</div>
+            <div class="feature-desc">Безопасная работа с данными</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📱</div>
+            <div class="feature-title">Везде</div>
+            <div class="feature-desc">Работает на любом устройстве</div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+    renderNav();
+
+    document.getElementById('searchForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const from = document.getElementById('from').value.trim();
+        const to   = document.getElementById('to').value.trim();
+        if (!from || !to) return;
+        window.location.href = `/trips.html?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+    });
+</script>
+
+</body>
+</html>

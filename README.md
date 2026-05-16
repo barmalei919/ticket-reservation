@@ -1,4 +1,4 @@
-# Bus Ticket Reservation System
+зда# Bus Ticket Reservation System
 
 REST API бэкенд для онлайн-бронирования автобусных билетов с JWT-аутентификацией, ролевой моделью доступа и статическим фронтендом.
 
@@ -62,6 +62,20 @@ REST API бэкенд для онлайн-бронирования автобу�
 | GET | `/api/admin/bookings/all` | Все бронирования |
 
 ## Запуск
+
+### Вариант 1 — Docker
+
+Требования: [Docker](https://www.docker.com/products/docker-desktop)
+
+```bash
+git clone https://github.com/barmalei919/ticket-reservation.git
+cd ticket-reservation/ticket-reservation
+docker-compose up --build
+```
+
+Приложение будет доступно на `http://localhost:8080`.
+
+### Вариант 2 — Локально
 
 ### Требования
 
@@ -185,6 +199,20 @@ REST API backend for online bus ticket booking with JWT authentication, role-bas
 | GET | `/api/admin/bookings/all` | All bookings |
 
 ## Getting Started
+
+### Option 1 — Docker 
+
+Requirements: [Docker](https://www.docker.com/products/docker-desktop)
+
+```bash
+git clone https://github.com/barmalei919/ticket-reservation.git
+cd ticket-reservation/ticket-reservation
+docker-compose up --build
+```
+
+App will be available at `http://localhost:8080`.
+
+### Option 2 — Local
 
 ### Prerequisites
 

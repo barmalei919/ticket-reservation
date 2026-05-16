@@ -35,8 +35,6 @@ public class SecurityConfig {
         return username -> {
             var user = userRepository.findByEmail(username)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
-            System.out.println("LOG: Logging in user: " + user.getEmail() + " with role: " + user.getRole());
-
             return org.springframework.security.core.userdetails.User.builder()
                     .username(user.getEmail())
                     .password(user.getPassword())
@@ -54,9 +52,12 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-
+                        .requestMatchers("/", "/index.html", "/trips.html", "/booking.html", "/auth.html", "/profile.html", "/admin.html").permitAll()
+                        .requestMatchers("/css/**", "/js/**").permitAll()
                         .requestMatchers("/api/users/register", "/api/users/login").permitAll()
                         .requestMatchers("/api/buses/**", "/api/routes/**").permitAll()
+                        .requestMatchers("/api/trips/search", "/api/trips/*/seats").permitAll()
+                        .requestMatchers("/api/seats/available/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

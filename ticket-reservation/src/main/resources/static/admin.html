@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель — АвтоБилет</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        @media (max-width: 700px) {
+            .admin-grid { grid-template-columns: 1fr; }
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            position: sticky;
+            top: 72px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            padding: .85rem 1.25rem;
+            cursor: pointer;
+            font-size: .9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-left: 3px solid transparent;
+            transition: all .15s;
+        }
+
+        .sidebar-item:hover { background: var(--bg); color: var(--text); }
+        .sidebar-item.active { color: var(--blue); background: var(--blue-light); border-left-color: var(--blue); }
+        .sidebar-icon { font-size: 1.1rem; }
+
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .875rem;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: .6rem 1rem;
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            color: var(--text-muted);
+            font-weight: 700;
+            border-bottom: 1.5px solid var(--border);
+            background: var(--bg);
+        }
+
+        .data-table td {
+            padding: .75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover td { background: var(--bg); }
+
+        .table-wrap {
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            overflow: auto;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: .75rem;
+        }
+
+        .panel-title { font-size: 1.1rem; font-weight: 700; }
+
+        .stat-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            padding: 1.25rem;
+        }
+
+        .stat-card .num { font-size: 1.8rem; font-weight: 800; color: var(--blue); }
+        .stat-card .lbl { font-size: .8rem; color: var(--text-muted); margin-top: .2rem; }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <a href="/" class="logo">🚌 АвтоБилет</a>
+    <nav class="nav" id="nav"></nav>
+</header>
+
+<div class="container">
+    <div class="admin-grid">
+
+        <div class="sidebar">
+            <div class="sidebar-item active" onclick="showPanel('bookings')">
+                <span class="sidebar-icon">🎟</span> Бронирования
+            </div>
+            <div class="sidebar-item" onclick="showPanel('users')">
+                <span class="sidebar-icon">👥</span> Пользователи
+            </div>
+        </div>
+
+        <div>
+            <div id="panel-bookings" class="panel active">
+                <div class="panel-header">
+                    <div class="panel-title">Все бронирования</div>
+                    <button class="btn btn-outline" onclick="loadBookings()">Обновить</button>
+                </div>
+                <div id="bookingsAlert"></div>
+                <div id="bookingsContent"><div class="loading">Загрузка…</div></div>
+            </div>
+
+            <div id="panel-users" class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Пользователи</div>
+                    <button class="btn btn-outline" onclick="loadUsers()">Обновить</button>
+                </div>
+                <div id="usersAlert"></div>
+                <div id="usersContent"><div class="loading">Загрузка…</div></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+    if (!requireAuth()) throw new Error('redirect');
+    if (!auth.isAdmin()) window.location.href = '/';
+
+    renderNav();
+
+    const statusLabels = { CONFIRMED: 'Оплачен', PENDING: 'Ожидает', CANCELLED: 'Отменён' };
+    const statusClasses = { CONFIRMED: 'badge-green', PENDING: 'badge-orange', CANCELLED: 'badge-gray' };
+
+    function showPanel(name) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+        document.getElementById(`panel-${name}`).classList.add('active');
+        event.currentTarget.classList.add('active');
+
+        if (name === 'bookings') loadBookings();
+        if (name === 'users')    loadUsers();
+    }
+
+    async function loadBookings() {
+        document.getElementById('bookingsContent').innerHTML = '<div class="loading">Загрузка…</div>';
+        clearAlert('bookingsAlert');
+        try {
+            const bookings = await http.get('/bookings/all');
+            renderBookings(bookings);
+        } catch (err) {
+            showAlert('bookingsAlert', err.message);
+            document.getElementById('bookingsContent').innerHTML = '';
+        }
+    }
+
+    function renderBookings(bookings) {
+        if (bookings.length === 0) {
+            document.getElementById('bookingsContent').innerHTML = `
+                <div class="empty-state"><div class="empty-icon">🎟</div><div class="empty-title">Бронирований нет</div></div>`;
+            return;
+        }
+
+        const confirmed = bookings.filter(b => b.ticketStatus === 'CONFIRMED').length;
+        const pending   = bookings.filter(b => b.ticketStatus === 'PENDING').length;
+        const cancelled = bookings.filter(b => b.ticketStatus === 'CANCELLED').length;
+
+        const stats = `
+            <div class="stat-cards">
+                <div class="stat-card"><div class="num">${bookings.length}</div><div class="lbl">Всего</div></div>
+                <div class="stat-card"><div class="num" style="color:#059669">${confirmed}</div><div class="lbl">Оплачено</div></div>
+                <div class="stat-card"><div class="num" style="color:#d97706">${pending}</div><div class="lbl">Ожидают</div></div>
+                <div class="stat-card"><div class="num" style="color:#dc2626">${cancelled}</div><div class="lbl">Отменено</div></div>
+            </div>`;
+
+        const rows = bookings.map(b => `
+            <tr>
+                <td>${b.ticketId}</td>
+                <td>${b.passengerFullName || '—'}</td>
+                <td>${b.routeName || '—'}</td>
+                <td>${b.departureTime ? fmtTime(b.departureTime) + ' ' + fmtDate(b.departureTime) : '—'}</td>
+                <td>№${b.seatNumber || '—'}</td>
+                <td>${b.price ? b.price.toLocaleString('ru-RU') + ' ₽' : '—'}</td>
+                <td><span class="badge ${statusClasses[b.ticketStatus] || 'badge-gray'}">${statusLabels[b.ticketStatus] || b.ticketStatus}</span></td>
+                <td>
+                    ${b.ticketStatus !== 'CANCELLED' ? `<button class="btn btn-outline" style="padding:.3rem .7rem; font-size:.8rem;" onclick="cancelBooking(${b.ticketId})">Отменить</button>` : ''}
+                </td>
+            </tr>`).join('');
+
+        document.getElementById('bookingsContent').innerHTML = `
+            ${stats}
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th><th>Пассажир</th><th>Маршрут</th><th>Отправление</th>
+                            <th>Место</th><th>Цена</th><th>Статус</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
+    }
+
+    async function cancelBooking(ticketId) {
+        if (!confirm(`Отменить билет #${ticketId}?`)) return;
+        try {
+            await http.delete(`/bookings/cancel/${ticketId}`);
+            loadBookings();
+        } catch (err) {
+            showAlert('bookingsAlert', err.message);
+        }
+    }
+
+    async function loadUsers() {
+        document.getElementById('usersContent').innerHTML = '<div class="loading">Загрузка…</div>';
+        clearAlert('usersAlert');
+        try {
+            const users = await http.get('/users');
+            renderUsers(users);
+        } catch (err) {
+            showAlert('usersAlert', err.message);
+            document.getElementById('usersContent').innerHTML = '';
+        }
+    }
+
+    function renderUsers(users) {
+        if (users.length === 0) {
+            document.getElementById('usersContent').innerHTML = `
+                <div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">Пользователей нет</div></div>`;
+            return;
+        }
+
+        const rows = users.map(u => `
+            <tr>
+                <td>${u.id}</td>
+                <td>${u.name || '—'}</td>
+                <td>${u.email}</td>
+                <td><span class="badge ${u.role === 'ADMIN' ? 'badge-blue' : 'badge-gray'}">${u.role}</span></td>
+            </tr>`).join('');
+
+        document.getElementById('usersContent').innerHTML = `
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>ID</th><th>Имя</th><th>Email</th><th>Роль</th></tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
+    }
+
+    loadBookings();
+</script>
+
+</body>
+</html>

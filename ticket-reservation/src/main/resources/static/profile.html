@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои билеты — АвтоБилет</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .ticket-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 4px 1fr;
+        }
+
+        .ticket-stripe { background: var(--blue); }
+        .ticket-stripe.confirmed { background: #059669; }
+        .ticket-stripe.cancelled { background: #dc2626; }
+        .ticket-stripe.pending   { background: #d97706; }
+
+        .ticket-body { padding: 1.25rem 1.5rem; }
+
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .ticket-route {
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+
+        .ticket-status {
+            padding: .25rem .75rem;
+            border-radius: 20px;
+            font-size: .75rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .status-CONFIRMED { background: #d1fae5; color: #065f46; }
+        .status-PENDING   { background: #fff7ed; color: #9a3412; }
+        .status-CANCELLED { background: #fee2e2; color: #991b1b; }
+
+        .ticket-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: .75rem;
+            margin-bottom: 1rem;
+        }
+
+        .detail-block .detail-label {
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: .2rem;
+        }
+
+        .detail-block .detail-value {
+            font-size: .95rem;
+            font-weight: 600;
+        }
+
+        .ticket-actions {
+            display: flex;
+            gap: .75rem;
+            flex-wrap: wrap;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px dashed var(--border);
+            margin: .75rem 0;
+        }
+
+        .user-banner {
+            background: linear-gradient(135deg, #1a56db 0%, #0f3fa6 100%);
+            padding: 2rem;
+            color: white;
+        }
+
+        .user-banner h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: .25rem; }
+        .user-banner p  { color: rgba(255,255,255,.75); font-size: .9rem; }
+
+        .stats-row {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-item .stat-num {
+            font-size: 1.6rem;
+            font-weight: 800;
+        }
+
+        .stat-item .stat-label {
+            font-size: .8rem;
+            color: rgba(255,255,255,.7);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1.5px solid var(--border);
+            margin-bottom: 1.5rem;
+            background: white;
+            padding: 0 1rem;
+        }
+
+        .tab {
+            padding: .85rem 1.25rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: .875rem;
+            color: var(--text-muted);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1.5px;
+            transition: all .15s;
+            user-select: none;
+        }
+
+        .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+        .tab:hover:not(.active) { color: var(--text); }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <a href="/" class="logo">🚌 АвтоБилет</a>
+    <nav class="nav" id="nav"></nav>
+</header>
+
+<div id="userBanner" class="user-banner">
+    <h2 id="userName">Загрузка…</h2>
+    <p id="userEmail"></p>
+    <div class="stats-row">
+        <div class="stat-item">
+            <div class="stat-num" id="statTotal">—</div>
+            <div class="stat-label">Всего билетов</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num" id="statConfirmed">—</div>
+            <div class="stat-label">Оплачено</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num" id="statPending">—</div>
+            <div class="stat-label">Ожидает оплаты</div>
+        </div>
+    </div>
+</div>
+
+<div class="tabs" id="filterTabs">
+    <div class="tab active" data-filter="ALL"       onclick="setFilter('ALL')">Все</div>
+    <div class="tab"        data-filter="PENDING"   onclick="setFilter('PENDING')">Ожидают оплаты</div>
+    <div class="tab"        data-filter="CONFIRMED" onclick="setFilter('CONFIRMED')">Оплаченные</div>
+    <div class="tab"        data-filter="CANCELLED" onclick="setFilter('CANCELLED')">Отменённые</div>
+</div>
+
+<div class="container" style="padding-top: 0;">
+    <div id="ticketsList">
+        <div class="loading">Загрузка билетов…</div>
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+    if (!requireAuth()) throw new Error('redirect');
+
+    renderNav();
+
+    let allTickets = [];
+    let currentFilter = 'ALL';
+
+    async function init() {
+        try {
+            const user = await http.get('/users/me');
+            document.getElementById('userName').textContent = user.name || 'Пользователь';
+            document.getElementById('userEmail').textContent = user.email;
+
+            allTickets = await http.get('/bookings/my');
+            updateStats();
+            renderTickets();
+        } catch (err) {
+            document.getElementById('ticketsList').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">⚠️</div>
+                    <div class="empty-title">Ошибка загрузки</div>
+                    <div>${err.message}</div>
+                </div>`;
+        }
+    }
+
+    function updateStats() {
+        document.getElementById('statTotal').textContent     = allTickets.length;
+        document.getElementById('statConfirmed').textContent = allTickets.filter(t => t.ticketStatus === 'CONFIRMED').length;
+        document.getElementById('statPending').textContent   = allTickets.filter(t => t.ticketStatus === 'PENDING').length;
+    }
+
+    function setFilter(filter) {
+        currentFilter = filter;
+        document.querySelectorAll('.tab').forEach(t => {
+            t.classList.toggle('active', t.dataset.filter === filter);
+        });
+        renderTickets();
+    }
+
+    function renderTickets() {
+        const list = currentFilter === 'ALL'
+            ? allTickets
+            : allTickets.filter(t => t.ticketStatus === currentFilter);
+
+        const container = document.getElementById('ticketsList');
+
+        if (list.length === 0) {
+            const msgs = {
+                ALL:       ['🎟', 'Билетов пока нет', 'Найдите рейс и забронируйте первый билет'],
+                PENDING:   ['⏳', 'Нет билетов, ожидающих оплаты', ''],
+                CONFIRMED: ['✅', 'Нет оплаченных билетов', ''],
+                CANCELLED: ['❌', 'Нет отменённых билетов', ''],
+            };
+            const [icon, title, sub] = msgs[currentFilter];
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">${icon}</div>
+                    <div class="empty-title">${title}</div>
+                    ${sub ? `<div style="margin-bottom:1.5rem">${sub}</div>` : ''}
+                    ${currentFilter === 'ALL' ? `<a href="/" class="btn btn-primary">Найти рейс</a>` : ''}
+                </div>`;
+            return;
+        }
+
+        const sorted = [...list].sort((a, b) => {
+            const da = a.departureTime ? new Date(a.departureTime) : 0;
+            const db = b.departureTime ? new Date(b.departureTime) : 0;
+            return da - db;
+        });
+
+        container.innerHTML = sorted.map(ticket => buildTicketCard(ticket)).join('');
+    }
+
+    function buildTicketCard(ticket) {
+        const status     = ticket.ticketStatus || 'PENDING';
+        const stripeClass = status.toLowerCase();
+
+        const statusLabels = {
+            CONFIRMED: 'Оплачен',
+            PENDING:   'Ожидает оплаты',
+            CANCELLED: 'Отменён',
+        };
+
+        const depTime = ticket.departureTime
+            ? `${fmtTime(ticket.departureTime)}, ${fmtDate(ticket.departureTime)}`
+            : '—';
+
+        const isPending   = status === 'PENDING';
+        const isCancelled = status === 'CANCELLED';
+
+        const actions = isPending ? `
+            <button class="btn btn-success" onclick="payTicket(${ticket.ticketId})">Оплатить</button>
+            <button class="btn btn-outline" onclick="cancelTicket(${ticket.ticketId})">Отменить</button>
+        ` : '';
+
+        return `
+        <div class="ticket-card" id="ticket-${ticket.ticketId}">
+            <div class="ticket-stripe ${stripeClass}"></div>
+            <div class="ticket-body">
+                <div class="ticket-header">
+                    <div class="ticket-route">${ticket.routeName || '—'}</div>
+                    <span class="ticket-status status-${status}">${statusLabels[status] || status}</span>
+                </div>
+
+                <div class="ticket-details">
+                    <div class="detail-block">
+                        <div class="detail-label">Отправление</div>
+                        <div class="detail-value">${depTime}</div>
+                    </div>
+                    <div class="detail-block">
+                        <div class="detail-label">Место</div>
+                        <div class="detail-value">№${ticket.seatNumber || '—'}</div>
+                    </div>
+                    <div class="detail-block">
+                        <div class="detail-label">Пассажир</div>
+                        <div class="detail-value">${ticket.passengerFullName || '—'}</div>
+                    </div>
+                    <div class="detail-block">
+                        <div class="detail-label">Стоимость</div>
+                        <div class="detail-value" style="color:var(--blue);">
+                            ${ticket.price ? ticket.price.toLocaleString('ru-RU') + ' ₽' : '—'}
+                        </div>
+                    </div>
+                </div>
+
+                ${actions ? `<hr class="divider"><div class="ticket-actions" id="actions-${ticket.ticketId}">${actions}</div>` : ''}
+                <div id="alert-${ticket.ticketId}"></div>
+            </div>
+        </div>`;
+    }
+
+    async function payTicket(ticketId) {
+        try {
+            await http.patch(`/bookings/${ticketId}/pay`);
+            const t = allTickets.find(t => t.ticketId === ticketId);
+            if (t) t.ticketStatus = 'CONFIRMED';
+            updateStats();
+            renderTickets();
+        } catch (err) {
+            document.getElementById(`alert-${ticketId}`).innerHTML =
+                `<div class="alert alert-error mt-1">${err.message}</div>`;
+        }
+    }
+
+    async function cancelTicket(ticketId) {
+        if (!confirm('Вы уверены, что хотите отменить билет?')) return;
+        try {
+            await http.delete(`/bookings/cancel/${ticketId}`);
+            const t = allTickets.find(t => t.ticketId === ticketId);
+            if (t) t.ticketStatus = 'CANCELLED';
+            updateStats();
+            renderTickets();
+        } catch (err) {
+            document.getElementById(`alert-${ticketId}`).innerHTML =
+                `<div class="alert alert-error mt-1">${err.message}</div>`;
+        }
+    }
+
+    init();
+</script>
+
+</body>
+</html>

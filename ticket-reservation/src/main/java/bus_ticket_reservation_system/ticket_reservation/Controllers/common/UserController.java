@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -52,6 +53,12 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(404).body(e.getMessage());
         }
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserResponseDTO> getCurrentUser(Authentication authentication) {
+        return ResponseEntity.ok(userService.findByEmail(authentication.getName()));
     }
 
     @GetMapping

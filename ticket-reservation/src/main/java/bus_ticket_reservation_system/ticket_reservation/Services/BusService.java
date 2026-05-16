@@ -42,18 +42,18 @@ public class BusService {
         return busMapper.toResponseDtoList(busRepository.findAll());
     }
 
-    public Bus getBusById(Long id) {
-        return busRepository
-                .findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Автобус с айди: " + id + " не найден"));
+    public BusResponseDto getBusById(Long id) {
+        return busRepository.findById(id)
+                .map(busMapper::toResponseDto)
+                .orElseThrow(() -> new EntityNotFoundException("Автобус не найден"));
     }
 
-    public Bus updateBus(Long id, Bus updatedBus) {
-        var busForUpdate = busRepository.
-                findById(id)
+    public BusResponseDto updateBus(Long id, BusRequestDto dto) {
+        Bus busForUpdate = busRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Автобус с айди: " + id + " не найден"));
-        busForUpdate.setPlateNumber(updatedBus.getPlateNumber());
-        return busRepository.save(busForUpdate);
+        busForUpdate.setPlateNumber(dto.plateNumber());
+        Bus savedBus = busRepository.save(busForUpdate);
+        return busMapper.toResponseDto(savedBus);
     }
 
     public void deleteBus(Long id) {

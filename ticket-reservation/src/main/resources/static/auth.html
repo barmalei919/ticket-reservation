@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход — АвтоБилет</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="auth-page">
+    <div class="auth-card">
+
+        <div class="auth-logo">
+            <a href="/" style="text-decoration:none;">
+                <div class="logo-text">🚌 АвтоБилет</div>
+            </a>
+            <div class="logo-sub">Билеты на автобус онлайн</div>
+        </div>
+
+        <div class="auth-tabs">
+            <div class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Вход</div>
+            <div class="auth-tab" id="tabRegister" onclick="switchTab('register')">Регистрация</div>
+        </div>
+
+        <form id="loginForm" onsubmit="doLogin(event)">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email">
+            </div>
+            <div class="form-group mt-2">
+                <label>Пароль</label>
+                <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+            <div id="loginAlert"></div>
+            <button type="submit" class="btn btn-primary btn-full mt-3" id="loginBtn">
+                Войти
+            </button>
+        </form>
+        <form id="registerForm" class="hidden" onsubmit="doRegister(event)">
+            <div class="form-group">
+                <label>Имя</label>
+                <input type="text" id="regName" placeholder="Иван" required autocomplete="given-name">
+            </div>
+            <div class="form-group mt-2">
+                <label>Email</label>
+                <input type="email" id="regEmail" placeholder="you@example.com" required autocomplete="email">
+            </div>
+            <div class="form-group mt-2">
+                <label>Пароль</label>
+                <input type="password" id="regPassword" placeholder="Минимум 6 символов" required minlength="6" autocomplete="new-password">
+            </div>
+            <div id="registerAlert"></div>
+            <button type="submit" class="btn btn-primary btn-full mt-3" id="registerBtn">
+                Создать аккаунт
+            </button>
+        </form>
+
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+    if (auth.isLoggedIn()) {
+        window.location.href = getRedirectUrl();
+    }
+
+    function getRedirectUrl() {
+        const p = new URLSearchParams(location.search);
+        return p.get('redirect') || '/';
+    }
+
+    function switchTab(tab) {
+        const isLogin = tab === 'login';
+        document.getElementById('tabLogin').classList.toggle('active', isLogin);
+        document.getElementById('tabRegister').classList.toggle('active', !isLogin);
+        document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
+        document.getElementById('registerForm').classList.toggle('hidden', isLogin);
+        clearAlert('loginAlert');
+        clearAlert('registerAlert');
+    }
+
+    async function doLogin(e) {
+        e.preventDefault();
+        const email    = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const btn      = document.getElementById('loginBtn');
+
+        btn.disabled = true;
+        btn.textContent = 'Вход…';
+        clearAlert('loginAlert');
+
+        try {
+            const { token, refreshToken } = await http.post('/users/login', { email, password });
+            const tmpToken = token;
+            localStorage.setItem('token', tmpToken);
+            const user = await http.get('/users/me');
+
+            auth.set(token, refreshToken, user.id, user.name, user.role);
+            window.location.href = getRedirectUrl();
+        } catch (err) {
+            localStorage.removeItem('token');
+            showAlert('loginAlert', err.message || 'Неверный email или пароль');
+            btn.disabled = false;
+            btn.textContent = 'Войти';
+        }
+    }
+
+    async function doRegister(e) {
+        e.preventDefault();
+        const name     = document.getElementById('regName').value.trim();
+        const email    = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+        const btn      = document.getElementById('registerBtn');
+
+        btn.disabled = true;
+        btn.textContent = 'Регистрация…';
+        clearAlert('registerAlert');
+
+        try {
+            const user = await http.post('/users/register', { name, email, password });
+
+            const { token, refreshToken } = await http.post('/users/login', { email, password });
+
+            auth.set(token, refreshToken, user.id, user.name, user.role);
+            window.location.href = getRedirectUrl();
+        } catch (err) {
+            showAlert('registerAlert', err.message || 'Ошибка регистрации');
+            btn.disabled = false;
+            btn.textContent = 'Создать аккаунт';
+        }
+    }
+</script>
+</body>
+</html>

@@ -67,7 +67,8 @@ public class BookingService {
     public void cancelBooking(Long ticketId) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Билета с таким айди " + ticketId + " не найдено"));
-         ticketRepository.deleteById(ticketId);
+        ticket.setTicketStatus(TicketStatus.CANCELLED);
+        ticketRepository.save(ticket);
     }
 
     @Transactional
@@ -76,6 +77,12 @@ public class BookingService {
                 .orElseThrow(() -> new EntityNotFoundException("Билет не найден"));
         ticket.setTicketStatus(TicketStatus.CONFIRMED);
         return bookingMapper.toDto(ticketRepository.save(ticket));
+    }
+
+    public List<BookingResponseDTO> getBookingsByUserEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден"));
+        return bookingMapper.toDtoList(ticketRepository.findByPassengerUserId(user.getId()));
     }
 
     public List<BookingResponseDTO> getAllBookings() {

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бронирование — АвтоБилет</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="/" class="logo">🚌 АвтоБилет</a>
+    <nav class="nav" id="nav"></nav>
+</header>
+
+<div class="container" id="mainContent">
+    <div class="loading">Загрузка…</div>
+</div>
+<div class="modal-overlay hidden" id="passengerModal">
+    <div class="modal">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+            <div class="modal-title" style="margin-bottom:0;">Данные пассажира</div>
+            <button onclick="document.getElementById('passengerModal').classList.add('hidden')"
+                    style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--text-muted); line-height:1;">×</button>
+        </div>
+        <p style="font-size:.875rem; color:var(--text-muted); margin-bottom:1rem; margin-top:-.5rem;">
+            Заполните данные один раз — они будут привязаны к вашему аккаунту.
+        </p>
+        <div class="form-group">
+            <label>Фамилия</label>
+            <input type="text" id="pSurname" placeholder="Иванов">
+        </div>
+        <div class="form-group mt-2">
+            <label>Имя</label>
+            <input type="text" id="pName" placeholder="Иван">
+        </div>
+        <div class="form-group mt-2">
+            <label>Отчество</label>
+            <input type="text" id="pPatronymic" placeholder="Иванович">
+        </div>
+        <div id="passengerAlert"></div>
+        <div style="display:flex; gap:.75rem; margin-top:1.25rem;">
+            <button class="btn btn-primary btn-full" id="savePassengerBtn" onclick="savePassengerAndBook()">
+                Сохранить и забронировать
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+    if (!requireAuth()) throw new Error('redirect');
+
+    const params = new URLSearchParams(location.search);
+    const tripId = params.get('tripId');
+    let trip = null;
+    let selectedSeat = null;
+    let pendingBooking = null;
+
+    if (!tripId) window.location.href = '/';
+
+    async function init() {
+        const cached = sessionStorage.getItem('currentTrip');
+        if (cached) trip = JSON.parse(cached);
+
+        try {
+            const seats = await http.get(`/seats/available/${tripId}`);
+            renderPage(seats);
+        } catch (err) {
+            document.getElementById('mainContent').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">⚠️</div>
+                    <div class="empty-title">Ошибка загрузки</div>
+                    <div>${err.message}</div>
+                </div>`;
+        }
+    }
+
+    function renderPage(seats) {
+        const content = document.getElementById('mainContent');
+
+        if (seats.length === 0) {
+            content.innerHTML = `
+                <a href="javascript:history.back()" class="back-link">← Назад к рейсам</a>
+                <div class="empty-state">
+                    <div class="empty-icon">😔</div>
+                    <div class="empty-title">Свободных мест нет</div>
+                    <div>Все места на этот рейс уже заняты</div>
+                </div>`;
+            return;
+        }
+
+        const tripInfo = trip ? `
+            <div class="info-row"><span class="lbl">Маршрут</span><span class="val">${trip.routeName || '—'}</span></div>
+            <div class="info-row"><span class="lbl">Отправление</span><span class="val">${fmtTime(trip.timeStart)}, ${fmtDate(trip.timeStart)}</span></div>
+            <div class="info-row"><span class="lbl">Прибытие</span><span class="val">${fmtTime(trip.timeEnd)}, ${fmtDate(trip.timeEnd)}</span></div>
+            <div class="info-row"><span class="lbl">Автобус</span><span class="val">${trip.busPlate || '—'}</span></div>
+            <div class="info-row"><span class="lbl">Цена</span><span class="val" style="color:var(--blue); font-size:1.1rem;">${trip.price ? trip.price.toLocaleString('ru-RU') + ' ₽' : '—'}</span></div>
+        ` : `<div class="info-row"><span class="lbl">Рейс ID</span><span class="val">${tripId}</span></div>`;
+
+        const seatButtons = seats.map(s => `
+            <button class="seat-btn" id="seat-${s.id}" data-id="${s.id}" data-num="${s.seatNumber}"
+                    onclick="selectSeat(${s.id}, ${s.seatNumber})">
+                ${s.seatNumber}
+            </button>`).join('');
+
+        content.innerHTML = `
+            <a href="javascript:history.back()" class="back-link">← Назад к рейсам</a>
+
+            <div class="booking-grid">
+                <div>
+                    <div class="section-card">
+                        <div class="section-title">
+                            <span class="step-num">1</span>
+                            Выберите место
+                        </div>
+                        <div class="seat-legend">
+                            <div class="legend-item">
+                                <div class="legend-dot free"></div> Свободно
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-dot selected"></div> Выбрано
+                            </div>
+                        </div>
+                        <div class="seat-grid">${seatButtons}</div>
+                    </div>
+
+                    <div class="section-card">
+                        <div class="section-title">
+                            <span class="step-num">2</span>
+                            Подтверждение
+                        </div>
+                        <div id="confirmInfo" style="color:var(--text-muted); font-size:.875rem; margin-bottom:1rem;">
+                            Выберите место, чтобы продолжить
+                        </div>
+                        <div id="bookingAlert"></div>
+                        <button class="btn btn-success btn-full" id="bookBtn" disabled onclick="startBooking()">
+                            Забронировать
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="summary-card">
+                        <div class="summary-title">Детали рейса</div>
+                        ${tripInfo}
+                        <div class="total-price" id="totalPrice">
+                            ${trip ? trip.price.toLocaleString('ru-RU') + ' ₽' : '—'}
+                        </div>
+                        <div style="font-size:.75rem; color:var(--text-muted); text-align:center;">
+                            Место: <span id="selectedSeatLabel" style="font-weight:700;">не выбрано</span>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    function selectSeat(seatId, seatNumber) {
+        if (selectedSeat) {
+            const prev = document.getElementById(`seat-${selectedSeat.id}`);
+            if (prev) prev.classList.remove('selected');
+        }
+
+        selectedSeat = { id: seatId, number: seatNumber };
+        document.getElementById(`seat-${seatId}`).classList.add('selected');
+
+        document.getElementById('selectedSeatLabel').textContent = `№${seatNumber}`;
+        document.getElementById('confirmInfo').innerHTML =
+            `Место <strong>№${seatNumber}</strong> — готово к бронированию`;
+        document.getElementById('bookBtn').disabled = false;
+    }
+
+    async function startBooking() {
+        if (!selectedSeat) return;
+
+        const btn = document.getElementById('bookBtn');
+        btn.disabled = true;
+        btn.textContent = 'Бронирование…';
+        clearAlert('bookingAlert');
+
+        try {
+            const userId = auth.getUserId();
+            const result = await http.post(
+                `/bookings/book?userId=${userId}`,
+                { tripId: Number(tripId), seatId: selectedSeat.id, passengerId: null }
+            );
+            pendingBooking = result;
+            showPaymentStep(result);
+        } catch (err) {
+            const msg = err.message || '';
+            if (msg.includes('личные данные') || msg.includes('профиль')) {
+                document.getElementById('passengerModal').classList.remove('hidden');
+            } else {
+                showAlert('bookingAlert', msg);
+            }
+            btn.disabled = false;
+            btn.textContent = 'Забронировать';
+        }
+    }
+
+    function showPaymentStep(booking) {
+        const content = document.getElementById('mainContent');
+        content.innerHTML = `
+            <div class="section-card" style="max-width: 500px; margin: 2rem auto;">
+                <div class="section-title">Билет забронирован!</div>
+                <div class="alert alert-success" style="margin-bottom:1rem;">
+                    Место №${booking.seatNumber || selectedSeat.number} успешно зарезервировано.
+                    Оплатите в течение суток, иначе бронирование будет снято.
+                </div>
+
+                <div class="info-row"><span class="lbl">Маршрут</span><span class="val">${booking.routeName || '—'}</span></div>
+                <div class="info-row"><span class="lbl">Пассажир</span><span class="val">${booking.passengerFullName || '—'}</span></div>
+                <div class="info-row"><span class="lbl">Место</span><span class="val">№${booking.seatNumber || selectedSeat.number}</span></div>
+                <div class="info-row"><span class="lbl">Отправление</span><span class="val">${booking.departureTime ? fmtTime(booking.departureTime) + ', ' + fmtDate(booking.departureTime) : '—'}</span></div>
+                <div class="info-row"><span class="lbl">Стоимость</span><span class="val" style="color:var(--blue); font-size:1.1rem;">${booking.price ? booking.price.toLocaleString('ru-RU') + ' ₽' : '—'}</span></div>
+
+                <div id="payAlert"></div>
+
+                <div style="display:flex; gap:.75rem; margin-top:1.5rem;">
+                    <button class="btn btn-success btn-full" onclick="payTicket(${booking.ticketId})">
+                        Оплатить
+                    </button>
+                    <button class="btn btn-outline" onclick="cancelTicket(${booking.ticketId})">
+                        Отмена
+                    </button>
+                </div>
+            </div>`;
+    }
+
+    async function payTicket(ticketId) {
+        try {
+            await http.patch(`/bookings/${ticketId}/pay`);
+            showSuccess();
+        } catch (err) {
+            showAlert('payAlert', err.message);
+        }
+    }
+
+    async function cancelTicket(ticketId) {
+        try {
+            await http.delete(`/bookings/cancel/${ticketId}`);
+            window.location.href = '/';
+        } catch (err) {
+            showAlert('payAlert', err.message);
+        }
+    }
+
+    function showSuccess() {
+        document.getElementById('mainContent').innerHTML = `
+            <div class="success-state">
+                <div class="success-icon">✅</div>
+                <div class="success-title">Оплата прошла успешно!</div>
+                <div class="success-sub">Билет подтверждён. Хорошей поездки!</div>
+                <a href="/" class="btn btn-primary">На главную</a>
+            </div>`;
+    }
+
+    async function savePassengerAndBook() {
+        const name       = document.getElementById('pName').value.trim();
+        const surName    = document.getElementById('pSurname').value.trim();
+        const otchestvo  = document.getElementById('pPatronymic').value.trim();
+
+        if (!name || !surName) {
+            showAlert('passengerAlert', 'Заполните имя и фамилию');
+            return;
+        }
+
+        const btn = document.getElementById('savePassengerBtn');
+        btn.disabled = true;
+        btn.textContent = 'Сохранение…';
+        clearAlert('passengerAlert');
+
+        try {
+            const userId = auth.getUserId();
+            await http.post(`/users/${userId}/profile`, { name, surName, otchestvo });
+            document.getElementById('passengerModal').classList.add('hidden');
+            btn.disabled = false;
+            btn.textContent = 'Сохранить и забронировать';
+            await startBooking();
+        } catch (err) {
+            showAlert('passengerAlert', err.message);
+            btn.disabled = false;
+            btn.textContent = 'Сохранить и забронировать';
+        }
+    }
+
+    renderNav();
+    init();
+</script>
+
+</body>
+</html>

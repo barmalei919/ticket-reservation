@@ -6,6 +6,7 @@ import bus_ticket_reservation_system.ticket_reservation.Entities.Route;
 import bus_ticket_reservation_system.ticket_reservation.Services.RouteService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,17 +40,20 @@ public class RouteController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<RouteResponseDTO> findRouteById(@PathVariable Long id) {
         return ResponseEntity.ok(routeService.getRouteById(id));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
         public  ResponseEntity<RouteResponseDTO> updateRoute(@PathVariable Long id,
                 @RequestBody RouteRequestDTO dto) {
         return ResponseEntity.ok(routeService.updateRoute(id,dto));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteRoute(@PathVariable Long id) {
         routeService.deleteRoute(id);
         return ResponseEntity.noContent().build();

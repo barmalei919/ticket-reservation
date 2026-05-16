@@ -5,6 +5,8 @@ import bus_ticket_reservation_system.ticket_reservation.DTO.BookingResponseDTO;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Seat;
 import bus_ticket_reservation_system.ticket_reservation.Services.BookingService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -46,7 +48,14 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.payForTicket(ticketId));
     }
 
+    @GetMapping("/my")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<BookingResponseDTO>> getMyBookings(Authentication authentication) {
+        return ResponseEntity.ok(bookingService.getBookingsByUserEmail(authentication.getName()));
+    }
+
     @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<BookingResponseDTO>> getAllBookings() {
         return ResponseEntity.ok(bookingService.getAllBookings());
     }

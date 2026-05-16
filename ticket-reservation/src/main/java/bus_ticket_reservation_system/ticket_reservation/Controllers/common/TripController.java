@@ -7,6 +7,7 @@ import bus_ticket_reservation_system.ticket_reservation.Entities.Trip;
 import bus_ticket_reservation_system.ticket_reservation.Services.TripService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,11 +22,13 @@ public class TripController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TripResponseDTO> createTrip(@RequestBody TripRequestDTO dto) {
         return ResponseEntity.ok(tripService.createTrip(dto));
     }
 
     @GetMapping("/search")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<List<TripResponseDTO>> findTrips(@RequestParam String from, @RequestParam String to)
     {
         List<TripResponseDTO> trips = tripService.findTrips(from, to);
@@ -33,6 +36,7 @@ public class TripController {
     }
 
     @GetMapping("/{id}/seats")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<Integer> getAvailableSeats(@PathVariable Long id) {
         int seats = tripService.getAvailableSeatsCount(id);
         return ResponseEntity.ok(seats);

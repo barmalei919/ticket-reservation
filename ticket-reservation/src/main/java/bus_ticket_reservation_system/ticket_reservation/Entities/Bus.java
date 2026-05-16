@@ -41,5 +41,8 @@ public class Bus {
     @Column(name = "plate_number", unique = true)
     private String plateNumber;
 
+    public Integer getSeatsCount() {
+        return this.capacity;
+    }
 
 }

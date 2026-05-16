@@ -26,4 +26,9 @@ public class Seat {
     @ManyToOne
     @JoinColumn(name = "bus_id")
     private  Bus bus;
+
+    public Seat(Bus bus, Integer seatNumber) {
+        this.bus = bus;
+        this.seatNumber = seatNumber;
+    }
 }

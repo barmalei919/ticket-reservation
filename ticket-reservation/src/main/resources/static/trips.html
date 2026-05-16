@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рейсы — АвтоБилет</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="/" class="logo">🚌 АвтоБилет</a>
+    <nav class="nav" id="nav"></nav>
+</header>
+
+<div style="background: var(--blue); padding: 1rem 2rem;">
+    <form id="searchForm" style="max-width: 680px; margin: 0 auto;">
+        <div class="search-row" style="gap: .75rem;">
+            <div class="form-group">
+                <input type="text" id="from" placeholder="Откуда" required autocomplete="off"
+                       style="background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.3); color: white;">
+            </div>
+            <div class="form-group">
+                <input type="text" id="to" placeholder="Куда" required autocomplete="off"
+                       style="background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.3); color: white;">
+            </div>
+            <button type="submit" class="btn btn-nav" style="height: 42px; font-size: .9rem;">
+                Найти
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="container">
+    <div class="results-header">
+        <div>
+            <div class="results-title" id="resultsTitle">Поиск рейсов…</div>
+            <div class="results-count" id="resultsCount"></div>
+        </div>
+        <a href="/" class="back-link" style="margin-bottom: 0;">← Изменить поиск</a>
+    </div>
+
+    <div id="tripsList">
+        <div class="loading">Загрузка рейсов…</div>
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+    renderNav();
+
+    const params = new URLSearchParams(location.search);
+    let from = params.get('from') || '';
+    let to   = params.get('to')   || '';
+
+    document.getElementById('from').value = from;
+    document.getElementById('to').value   = to;
+
+    document.getElementById('searchForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        from = document.getElementById('from').value.trim();
+        to   = document.getElementById('to').value.trim();
+        if (!from || !to) return;
+        history.pushState({}, '', `/trips.html?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+        loadTrips();
+    });
+
+    async function loadTrips() {
+        if (!from || !to) {
+            window.location.href = '/';
+            return;
+        }
+
+        document.getElementById('resultsTitle').textContent = `${from} → ${to}`;
+        document.getElementById('tripsList').innerHTML = '<div class="loading">Загрузка рейсов…</div>';
+
+        try {
+            const trips = await http.get(`/trips/search?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+            renderTrips(trips);
+        } catch (err) {
+            document.getElementById('tripsList').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">⚠️</div>
+                    <div class="empty-title">Не удалось загрузить рейсы</div>
+                    <div>${err.message}</div>
+                </div>`;
+        }
+    }
+
+    function renderTrips(trips) {
+        const container = document.getElementById('tripsList');
+
+        window._tripsCache = trips;
+        const active = trips.filter(t => t.status !== 'CANCELLED');
+        document.getElementById('resultsCount').textContent =
+            active.length > 0 ? `Найдено рейсов: ${active.length}` : '';
+
+        if (active.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">🔍</div>
+                    <div class="empty-title">Рейсов не найдено</div>
+                    <div>Попробуйте другое направление</div>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = active.map(trip => {
+            const seats = trip.availableSeats;
+            const seatsLabel = seats === 0 ? 'Мест нет'
+                : seats <= 5 ? `Осталось мест: ${seats}`
+                : `Свободно мест: ${seats}`;
+            const seatsBadge = seats === 0 ? 'badge-orange'
+                : seats <= 5 ? 'badge-orange' : 'badge-green';
+
+            const duration = fmtDuration(trip.timeStart, trip.timeEnd);
+
+            return `
+            <div class="trip-card">
+                <div>
+                    <div class="trip-route">${trip.routeName || `${from} — ${to}`}</div>
+                    <div class="trip-times">
+                        <div class="time-block">
+                            <div class="time">${fmtTime(trip.timeStart)}</div>
+                            <div class="date">${fmtDate(trip.timeStart)}</div>
+                        </div>
+                        <div class="time-arrow">— ${duration} →</div>
+                        <div class="time-block">
+                            <div class="time">${fmtTime(trip.timeEnd)}</div>
+                            <div class="date">${fmtDate(trip.timeEnd)}</div>
+                        </div>
+                    </div>
+                    <div class="trip-badges">
+                        <span class="badge badge-gray">🚌 ${trip.busPlate}</span>
+                        <span class="badge ${seatsBadge}">${seatsLabel}</span>
+                    </div>
+                </div>
+                <div class="trip-right">
+                    <div class="trip-price">${trip.price.toLocaleString('ru-RU')} ₽</div>
+                    <div class="trip-price-sub">за место</div>
+                    ${seats > 0
+                        ? `<button class="btn btn-primary mt-2" onclick="goToBooking(${trip.id})">Купить</button>`
+                        : `<button class="btn btn-outline mt-2" disabled>Нет мест</button>`
+                    }
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function goToBooking(tripId) {
+        if (!auth.isLoggedIn()) {
+            const redirect = encodeURIComponent(`/booking.html?tripId=${tripId}`);
+            window.location.href = `/auth.html?redirect=${redirect}`;
+            return;
+        }
+        const tripData = window._tripsCache ? window._tripsCache.find(t => t.id == tripId) : null;
+        if (tripData) sessionStorage.setItem('currentTrip', JSON.stringify(tripData));
+        window.location.href = `/booking.html?tripId=${tripId}`;
+    }
+
+    loadTrips();
+</script>
+
+</body>
+</html>

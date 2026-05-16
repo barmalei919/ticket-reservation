@@ -13,6 +13,9 @@ import java.util.List;
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
     boolean existsByTripAndSeat(Trip trip, Seat seat);
+
     @Query("SELECT t.seat FROM Ticket t WHERE t.trip.id = :tripId")
     List<Seat> findOccupiedSeatsByTripId(@Param("tripId") Long tripId);
+
+    List<Ticket> findByPassengerUserId(Long userId);
 }

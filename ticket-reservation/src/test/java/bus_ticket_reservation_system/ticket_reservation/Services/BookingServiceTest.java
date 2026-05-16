@@ -180,9 +180,11 @@ public class BookingServiceTest {
     void cancelBooking_success() {
         Ticket ticket = new Ticket();
         ticket.setId(1L);
+        ticket.setTicketStatus(TicketStatus.PENDING);
         when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
         bookingService.cancelBooking(1L);
-        verify(ticketRepository).deleteById(1L);
+        assertThat(ticket.getTicketStatus()).isEqualTo(TicketStatus.CANCELLED);
+        verify(ticketRepository).save(ticket);
     }
 
     @Test
