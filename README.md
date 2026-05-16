@@ -1,4 +1,4 @@
-зда# Bus Ticket Reservation System
+# Bus Ticket Reservation System
 
 REST API бэкенд для онлайн-бронирования автобусных билетов с JWT-аутентификацией, ролевой моделью доступа и статическим фронтендом.
 
