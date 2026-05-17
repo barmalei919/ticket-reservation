@@ -54,6 +54,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/index.html", "/trips.html", "/booking.html", "/auth.html", "/profile.html", "/admin.html").permitAll()
                         .requestMatchers("/css/**", "/js/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/users/register", "/api/users/login").permitAll()
                         .requestMatchers("/api/buses/**", "/api/routes/**").permitAll()
                         .requestMatchers("/api/trips/search", "/api/trips/*/seats").permitAll()

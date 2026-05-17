@@ -21,7 +21,20 @@ REST API бэкенд для онлайн-бронирования автобу�
 - Глобальная обработка ошибок (`@ControllerAdvice`)
 - Unit-тесты для сервисного слоя
 
+## Интерфейс
+
+### Главная — поиск рейсов
+![Главная страница](docs/screenshots/home.png)
+
+### Список найденных рейсов
+![Список рейсов](docs/screenshots/trips.png)
+
+### Выбор места и бронирование
+![Бронирование](docs/screenshots/booking.png)
+
 ## API
+
+> Интерактивная документация доступна по адресу **`http://localhost:8080/swagger-ui/index.html`** после запуска приложения.
 
 ### Пользователи
 
@@ -158,7 +171,20 @@ REST API backend for online bus ticket booking with JWT authentication, role-bas
 - Global exception handling (`@ControllerAdvice`)
 - Unit tests for the service layer
 
+## Screenshots
+
+### Home — trip search
+![Home page](docs/screenshots/home.png)
+
+### Trip search results
+![Trips list](docs/screenshots/trips.png)
+
+### Seat selection & booking
+![Booking](docs/screenshots/booking.png)
+
 ## API
+
+> Interactive API docs available at **`http://localhost:8080/swagger-ui/index.html`** after startup.
 
 ### Users
 
