@@ -2,6 +2,7 @@ package bus_ticket_reservation_system.ticket_reservation.Mappers;
 
 import bus_ticket_reservation_system.ticket_reservation.DTO.TripResponseDTO;
 import bus_ticket_reservation_system.ticket_reservation.Entities.Trip;
+import bus_ticket_reservation_system.ticket_reservation.Enums.TicketStatus;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -21,8 +22,10 @@ public class TripMapper {
         int availableSeats = 0;
         if (trip.getBus() != null) {
             int totalSeats = trip.getBus().getSeatsCount();
-            int soldTickets = (trip.getTickets() != null) ? trip.getTickets().size() : 0;
-            availableSeats = totalSeats - soldTickets;
+            long soldTickets = (trip.getTickets() != null) ? trip.getTickets().stream()
+                    .filter(t -> t.getTicketStatus() != TicketStatus.CANCELLED)
+                    .count() : 0;
+            availableSeats = totalSeats - (int) soldTickets;
         }
 
         return new TripResponseDTO(

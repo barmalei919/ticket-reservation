@@ -28,6 +28,7 @@ public class BookingService {
         List<Seat> allBusSeats = trip.getBus().getSeatsList();
         List<Seat> busySeats = trip.getTickets()
                 .stream()
+                .filter(ticket -> ticket.getTicketStatus() != TicketStatus.CANCELLED)
                 .map(Ticket::getSeat)
                 .toList();
         return allBusSeats
@@ -49,7 +50,7 @@ public class BookingService {
             throw new IllegalStateException("У пользователя не заполнены личные данные (профиль пассажира)");
         }
 
-        if (ticketRepository.existsByTripAndSeat(trip, seat)) {
+        if (ticketRepository.existsByTripAndSeatAndTicketStatusNot(trip, seat, TicketStatus.CANCELLED)) {
             throw new IllegalStateException("Место занято");
         }
 

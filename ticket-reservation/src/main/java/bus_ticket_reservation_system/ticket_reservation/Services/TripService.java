@@ -9,6 +9,7 @@ import bus_ticket_reservation_system.ticket_reservation.Enums.TripStatus;
 import bus_ticket_reservation_system.ticket_reservation.Mappers.TripMapper;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.BusRepository;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.RouteRepository;
+import bus_ticket_reservation_system.ticket_reservation.Repositories.TicketRepository;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.TripRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -25,6 +26,7 @@ public class TripService {
     private final TripMapper tripMapper;
     private final BusRepository busRepository;
     private final RouteRepository routeRepository;
+    private final TicketRepository ticketRepository;
 
 
     public List<TripResponseDTO> findTrips(String from, String to) {
@@ -81,7 +83,7 @@ public class TripService {
         Trip trip = tripRepository.findById(tripId).
                 orElseThrow(() -> new EntityNotFoundException("Trip not found by id "+ tripId));
         int allSeatsInBus = trip.getBus().getSeatsCount();
-        int selledTickets = trip.getTickets().size();
-        return  allSeatsInBus-selledTickets;
+        int activeTickets = ticketRepository.countByTripIdAndTicketStatusNot(tripId, TicketStatus.CANCELLED);
+        return allSeatsInBus - activeTickets;
     }
 }

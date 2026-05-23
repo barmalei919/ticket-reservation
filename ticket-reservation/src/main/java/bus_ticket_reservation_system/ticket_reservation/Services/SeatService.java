@@ -6,6 +6,7 @@ import bus_ticket_reservation_system.ticket_reservation.Entities.Trip;
 import bus_ticket_reservation_system.ticket_reservation.Mappers.SeatMapper;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.BusRepository;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.SeatRepository;
+import bus_ticket_reservation_system.ticket_reservation.Enums.TicketStatus;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.TicketRepository;
 import bus_ticket_reservation_system.ticket_reservation.Repositories.TripRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -33,7 +34,7 @@ public class SeatService {
                 .orElseThrow(() -> new EntityNotFoundException("Рейс не найден"));
         List<Seat> allSeats = trip.getBus().getSeatsList();
 
-        List<Long> busySeatIds = ticketRepository.findOccupiedSeatsByTripId(tripId)
+        List<Long> busySeatIds = ticketRepository.findOccupiedSeatsByTripId(tripId, TicketStatus.CANCELLED)
                 .stream()
                 .map(Seat::getId)
                 .toList();
@@ -53,7 +54,7 @@ public class SeatService {
         if (!seat.getBus().getId().equals(trip.getBus().getId())) {
             throw new IllegalArgumentException("Это место из другого автобуса! На этот рейс оно не подходит.");
         }
-        return !ticketRepository.existsByTripAndSeat(trip,seat);
+        return !ticketRepository.existsByTripAndSeatAndTicketStatusNot(trip, seat, TicketStatus.CANCELLED);
     }
 
     public SeatResponseDTO getSeatByNumber(Long busId, Integer seatId) {
