@@ -8,6 +8,7 @@ REST API бэкенд для онлайн-бронирования автобу�
 - **Spring Security** — JWT (Access + Refresh токены), BCrypt
 - **Spring Data JPA** / **Hibernate**
 - **PostgreSQL**
+- **Flyway** — версионирование и миграции схемы БД
 - **Lombok**, **Maven**
 
 ## Возможности
@@ -125,6 +126,8 @@ docker-compose up --build
    mvn spring-boot:run
    ```
 
+   > Таблицы создаются автоматически при первом запуске через Flyway-миграции.
+
 ### Фронтенд
 
 После запуска доступен на `http://localhost:8080`.
@@ -158,6 +161,7 @@ REST API backend for online bus ticket booking with JWT authentication, role-bas
 - **Spring Security** — JWT (Access + Refresh tokens), BCrypt
 - **Spring Data JPA** / **Hibernate**
 - **PostgreSQL**
+- **Flyway** — schema versioning and migrations
 - **Lombok**, **Maven**
 
 ## Features
@@ -274,6 +278,8 @@ App will be available at `http://localhost:8080`.
    ```bash
    mvn spring-boot:run
    ```
+
+   > Tables are created automatically on first startup via Flyway migrations.
 
 ### Frontend
 
